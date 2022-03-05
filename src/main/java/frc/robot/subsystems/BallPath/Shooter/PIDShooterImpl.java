@@ -33,8 +33,8 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
     private int stallCount = 0;
-    private final int stallCountLimit = 50; // 50 * 20ms = 1 second of stall
-    private final double hoodStallCurrent = -13;
+    private final int stallCountLimit = 100; // 100 * 20ms = 2 second of stall
+    private final double hoodStallCurrent = -12;
     private double setPointHood;
     private double setPointRotation;
     private double setPointShooterPID;
