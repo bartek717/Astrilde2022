@@ -28,7 +28,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     private final TalonSRX hoodMotor;
 
     private double kp = 0.00175;
-    private double ki = 0.00002;
+    private double ki = 0.00003;
     private double kd = 0.00002;
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
@@ -179,6 +179,12 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
         // SmartDashboard.putNumber("Turret Hood Encoder Reading Velocity", turretHoodVelocity);
 
         switch (this.requestedPosition) {
+            case TARMAC:
+                setPointHood = 230_000; // to be decided
+                setPointShooterPID = 6_500; // tbd
+                // setPointShooterPID = 0.45;
+                setPointRotation = 0; // will probably still be 0 for the auto shot
+                break;
             case FENDER:
                 setPointHood = 100_000;
                 setPointShooterPID = 3500; 
@@ -208,6 +214,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 setPointRotation = 0;
                 hoodReady = false;
                 turretReady = false;
+                shooterPid.reset();
                 break;
             case TEST:
                 centerUsingLimelight = false;
@@ -263,7 +270,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
 
         if(setPointShooterPID != 0){
             currentOutput = shooterPid.calculate(shooterEncoderReadingVelocity, setPointShooterPID);
-            currentOutput += 0.01; // hack "feed forward"
+            currentOutput += 0.035; // hack "feed forward"
             currentOutput = Utils.normalizePwm(currentOutput);
             // SmartDashboard.putNumber("Setpoint for the shooter is: ", setPointShooterPID);
             // SmartDashboard.putNumber("Current Output is: ", shooterEncoderReadingVelocity);
@@ -271,7 +278,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
             currentOutput = 0;
         }
         this.shooterMotor.set(ControlMode.PercentOutput, currentOutput);
-        // System.out.println("Shooter setpoint " + setPointShooterPID + ", speed " + shooterEncoderReadingVelocity + ", power " + currentOutput);
+        System.out.println("Shooter setpoint " + setPointShooterPID + ", speed " + shooterEncoderReadingVelocity + ", power " + currentOutput);
     }
 
     @Override
