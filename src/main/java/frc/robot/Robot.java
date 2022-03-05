@@ -144,8 +144,8 @@ public class Robot extends TitanBot {
     // SHOOTER COMPONENTS
     TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
-    shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
-    shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
+    shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 75, 2));
+    shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 50, 4));
     TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
     this.shooter = new PIDShooterImpl(turretMotor, shooterMotor, hoodMotor);
 
