@@ -24,6 +24,9 @@ import ca.team3161.lib.utils.controls.JoystickMode;
 import ca.team3161.lib.utils.controls.LogitechDualAction;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoMode;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -71,6 +74,7 @@ public class Robot extends TitanBot {
   public static final boolean DEBUG = false;
   double turretEncoderReadingPosition;
   double turretEncoderReadingVelocity;
+  private UsbCamera webcam;
 
   private Autonomous auto;
   // private RelativeEncoder leftEncoder1, leftEncoder2, rightEncoder1, rightEncoder2;
@@ -163,6 +167,11 @@ public class Robot extends TitanBot {
     this.operatorPad = new LogitechDualAction(RobotMap.OPERATOR_PAD_PORT);
 
     //this.climberSubsystem = new ClimberImpl();
+
+    this.webcam = CameraServer.startAutomaticCapture();
+    if (!this.webcam.setVideoMode(VideoMode.PixelFormat.kMJPEG, 960, 640, 20)) {
+        System.err.println("Failed to set webcam parameters");
+    }
 
     // register lifecycle components
     registerLifecycleComponent(driverPad);
