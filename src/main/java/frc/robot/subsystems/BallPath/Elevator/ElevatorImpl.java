@@ -54,6 +54,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     @Override
     public void task() throws Exception {
 
+<<<<<<< Updated upstream
         double sensorReading = this.sensor.getRangeInches();
         SmartDashboard.putNumber("Elevator Ultrasonic", sensorReading);
         this.sensorSamples.add(sensorReading);
@@ -111,8 +112,96 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                 elevator.stopMotor();
                 break;
         }
+=======
+        // double sensorReading = this.sensor.getRangeInches();
+        // // SmartDashboard.putNumber("Elevator Ultrasonic", sensorReading);
+        // this.sensorSamples.add(sensorReading);
+        // if (sensorSamples.size() > SAMPLE_COUNT) {
+        //     this.sensorSamples.remove();
+        // }
+        // double meanReading = 0;
+        // for (Double d : sensorSamples) {
+        //     meanReading += d / sensorSamples.size();
+        // }
+        // Color detectedColor = elevatorColorSensor.getColor();
+        // SmartDashboard.putNumber("Red", detectedColor.red);
+        // SmartDashboard.putNumber("Green", detectedColor.green);
+        // SmartDashboard.putNumber("Blue", detectedColor.blue);
+        // // boolean stateChanged = ballPresent != lastPresent;
+        // if(detectedColor.red > 0.33){
+        //     detectedColorElevator = 1;
+        //     System.out.println("RED");
+        // }else if(detectedColor.blue > 0.32){
+        //     detectedColorElevator = 2;
+        //     System.out.println("BLUE");
+        // }else{
+        //     detectedColorElevator = 0;
+        // }
 
-        lastPresent = ballPresent;
+        // switch (this.action) {
+        //     case STOP:
+        //         this.elevator.set(0);
+        //         break;
+        //     case AUTO:
+        //         this.elevator.set(MOTOR_SPEED);
+        //         break;
+        //     case FEED:
+        //         if (ballPresent) {
+        //             this.elevator.stopMotor();
+        //         } else {
+        //             this.elevator.set(MOTOR_SPEED);
+        //         }
+        //         break;
+        //     case PRIME:
+        //         if (ballPresent) {
+        //             this.elevator.set(MOTOR_SPEED);
+        //         } else {
+        //             this.elevator.stopMotor();
+        //         }
+        //         break;
+        //     case REJECT:
+        //         if (ballPresent) {
+        //             this.elevator.set(-MOTOR_SPEED);
+        //         } else {
+        //             this.elevator.stopMotor();
+        //         }
+        //         break;
+        //     case TEST:
+        //         if (shooter.readyToShoot()) {
+        //             this.elevator.set(MOTOR_SPEED);
+        //         }
+        //         break;
+        //     case IN:
+        //         if (!shooter.blocking()) {
+        //             this.elevator.set(MOTOR_SPEED);
+        //         }
+        //         break;
+        //     case OUT:
+        //         this.elevator.set(-MOTOR_SPEED);
+        //         break;
+        //     case RUN:
+        //         this.elevator.set(MOTOR_SPEED);
+        //         break;
+        //     case INDEX:
+        //         System.out.println("INDEX IS WORKING FOR THE ELEVATOR");
+        //         if (detectedColorElevator == 1 || detectedColorElevator == 2){
+        //             this.elevator.set(0);
+        //             System.out.println("Indexing the turret");
+        //             break;
+        //         }else{
+        //             this.elevator.set(INDEX_MOTOR_SPEED);
+        //             System.out.println("Indexing the turret");
+        //             break;
+        //         }
+
+        //     case NONE:
+        //     default:
+        //         elevator.stopMotor();
+        //         break;
+        // }
+>>>>>>> Stashed changes
+
+        // lastPresent = ballPresent;
     }
 
     @Override

@@ -102,12 +102,12 @@ public class Autonomous {
         // boolean robotFull = intakeLoaded && elevatorLoaded;
 
         ballPath.setAction(BallPath.BallAction.AUTO);
-        ballPath.getIntake().setAction(Intake.IntakeAction.AUTO);
+        //ballPath.getIntake().setAction(Intake.IntakeAction.AUTO);
         ballPath.getShooter().setShotPosition(Shooter.ShotPosition.TARMAC);
     }
 
     void shoot() throws InterruptedException {
-        ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
+        //ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
     }
 
     void stopDriving() {

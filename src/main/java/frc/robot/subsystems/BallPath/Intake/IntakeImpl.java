@@ -63,6 +63,7 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
         boolean ballPresent = meanReading < PRIMED_DIST_THRESHOLD;
         // boolean stateChanged = ballPresent != lastPresent;
 
+<<<<<<< Updated upstream
         switch (this.action) {
             case AUTO:
                 this.intake.set(MOTOR_SPEED);
@@ -104,6 +105,52 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
         }
 
         lastPresent = ballPresent;
+=======
+        // switch (this.action) {
+        //     case AUTO:
+        //         this.intake.set(MOTOR_SPEED);
+        //         break;
+        //     case FEED:
+        //         if (ballPresent) {
+        //             this.intake.stopMotor();
+        //         } else {
+        //             this.intake.set(MOTOR_SPEED);
+        //         }
+        //         break;
+        //     case PRIME:
+        //         if (ballPresent) {
+        //             this.intake.set(MOTOR_SPEED);
+        //         } else {
+        //             this.intake.stopMotor();
+        //         }
+        //         break;
+        //     case STOP:
+        //         this.intake.set(0);
+        //         break;
+        //     case REJECT:
+        //         if (ballPresent) {
+        //             this.intake.set(-MOTOR_SPEED);
+        //         } else {
+        //             this.intake.stopMotor();
+        //         }
+        //         break;
+        //     case TEST:
+        //         this.intake.set(MOTOR_SPEED);
+        //         break;
+        //     case IN:
+        //         this.intake.set(MOTOR_SPEED);
+        //         break;
+        //     case OUT:
+        //         this.intake.set(-MOTOR_SPEED);
+        //         break;
+        //     case NONE:
+        //     default:
+        //         intake.stopMotor();
+        //         break;
+        // }
+
+        // lastPresent = ballPresent;
+>>>>>>> Stashed changes
     }
 
     @Override

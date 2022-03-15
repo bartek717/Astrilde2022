@@ -8,17 +8,23 @@ import frc.robot.subsystems.BallPath.Shooter.Shooter;
 
 public interface BallPath extends Subsystem, LifecycleListener {
     void setAction(BallAction action);
-    Intake getIntake();
+    // Intake getIntake();
     Shooter getShooter();
-    Elevator getElevator();
+    // Elevator getElevator();
 
     enum BallAction {
         NONE,
         AUTO,
         FEED,
         SHOOT,
-        TEST,
         MANUAL,
+<<<<<<< Updated upstream
+=======
+        INDEX,
+        OUTTAKE,
+        ELEVATOR_DOWN,
+        ELEVATOR_UP,
+>>>>>>> Stashed changes
         ;
     }
 }
