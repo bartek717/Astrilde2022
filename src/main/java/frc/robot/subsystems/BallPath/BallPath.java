@@ -16,9 +16,12 @@ public interface BallPath extends Subsystem, LifecycleListener {
         NONE,
         AUTO,
         FEED,
-        SHOOT,
+        SHOOTGENERAL,
+        SHOOTFENDER,
         TEST,
         MANUAL,
+        INDEX,
+        OUT,
         ;
     }
 }

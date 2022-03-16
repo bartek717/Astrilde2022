@@ -21,6 +21,8 @@ public interface Shooter extends Subsystem, LifecycleListener {
         FENDER,
         TARMAC,
         TEST,
+        TEST2,
+        GENERAL
         ;
     }
 }

@@ -8,6 +8,7 @@ public interface Intake extends Subsystem, LifecycleListener {
     boolean ballPrimed();
 
     enum IntakeAction {
+        STOP,
         NONE,
         AUTO,
         PRIME,

@@ -8,6 +8,7 @@ public interface Elevator extends Subsystem, LifecycleListener {
     boolean ballPrimed();
 
     enum ElevatorAction {
+        STOP,
         NONE,
         AUTO,
         PRIME,
@@ -16,6 +17,8 @@ public interface Elevator extends Subsystem, LifecycleListener {
         TEST,
         IN,
         OUT,
+        RUN,
+        INDEX,
         ;
     }
 }

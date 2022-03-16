@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
 
-    private static final double MOTOR_SPEED = 0.4;
+    private static final double MOTOR_SPEED = 0.7;
     private static final double PRIMED_DIST_THRESHOLD = 15;
     private static final int SAMPLE_COUNT = 1;
 
@@ -50,7 +50,7 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
     @Override
     public void task() throws Exception {
         double sensorReading = this.intakeSensor.getRangeInches();
-        SmartDashboard.putNumber("Intake ultrasonic", sensorReading);
+        // SmartDashboard.putNumber("Intake ultrasonic", sensorReading);
         this.sensorSamples.add(sensorReading);
         if (sensorSamples.size() > SAMPLE_COUNT) {
             this.sensorSamples.remove();
@@ -80,6 +80,9 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
                 } else {
                     this.intake.stopMotor();
                 }
+                break;
+            case STOP:
+                this.intake.set(0);
                 break;
             case REJECT:
                 if (ballPresent) {

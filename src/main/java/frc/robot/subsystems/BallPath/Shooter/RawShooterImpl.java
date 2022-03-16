@@ -35,8 +35,8 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
 
     private final double hoodBuffer = 18_000;
     private final double turretBuffer = 30000;
-    private final double turretSpeed = 0.3;
-    private final double hoodSpeed = 1;
+    private final double turretSpeed = 0.15;
+    private final double hoodSpeed = .75;
 
     public RawShooterImpl(TalonSRX turretMotor, TalonFX shooterMotor, TalonSRX hoodMotor) {
         super(10, TimeUnit.MILLISECONDS);
@@ -66,12 +66,12 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
         turretEncoderReadingPosition = this.turretMotor.getSelectedSensorPosition();
         turretEncoderReadingVelocity = this.turretMotor.getSelectedSensorVelocity();
 
-        SmartDashboard.putNumber("Shooter Encoder reading position", shooterEncoderReadingPosition);
-        SmartDashboard.putNumber("Shooter Encoder Reading Velocity", shooterEncoderReadingVelocity);
-        SmartDashboard.putNumber("Turret Encoder Reading Position", turretEncoderReadingPosition);
-        SmartDashboard.putNumber("Turret Encoder Reading Velocity", turretEncoderReadingVelocity);
-        SmartDashboard.putNumber("Turret Hood Encoder reading Position", turretHoodPosition);
-        SmartDashboard.putNumber("Turret Hood Encoder Reading Velocity", turretHoodVelocity);
+        // SmartDashboard.putNumber("Shooter Encoder reading position", shooterEncoderReadingPosition);
+        // SmartDashboard.putNumber("Shooter Encoder Reading Velocity", shooterEncoderReadingVelocity);
+        // SmartDashboard.putNumber("Turret Encoder Reading Position", turretEncoderReadingPosition);
+        // SmartDashboard.putNumber("Turret Encoder Reading Velocity", turretEncoderReadingVelocity);
+        // SmartDashboard.putNumber("Turret Hood Encoder reading Position", turretHoodPosition);
+        // SmartDashboard.putNumber("Turret Hood Encoder Reading Velocity", turretHoodVelocity);
 
         switch (this.requestedPosition) {
             case TARMAC:
@@ -82,7 +82,8 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
             case FENDER:
                 setPointHood = 100_000;
                 setPointShooter = 0.35; // tbd
-                setPointRotation = 0;
+                setPointRotation = 100000;
+                System.out.println("USING THE RAW SHOOTER IMPL");
                 break;
             case LAUNCHPAD_CLOSE:
                 setPointHood = 0; // to be decided
@@ -104,6 +105,12 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
             case TEST:
                 setPointShooter = 0.2;
                 setPointHood = 100_000;
+                break;
+            case TEST2:
+                setPointRotation = 100000;
+                setPointShooter = 0;
+                setPointHood = 0;
+                System.out.println("Setting shot position");
                 break;
             default:
                 break;
@@ -162,7 +169,11 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
 
     @Override
     public boolean readyToShoot(){
-        return turretReady && hoodReady && shooterEncoderReadingVelocity > 5000;
+        boolean shooterReady = false;
+        if(Math.abs(shooterEncoderReadingVelocity) > setPointShooter - 500 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 500){
+            shooterReady = true;
+        }
+        return turretReady && hoodReady && shooterReady;
     }
 
     @Override
