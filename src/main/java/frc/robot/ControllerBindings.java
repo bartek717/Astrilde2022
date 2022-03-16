@@ -13,6 +13,7 @@ public final class ControllerBindings {
 
     public static final LogitechButton INTAKE = LogitechButton.LEFT_TRIGGER;
     public static final LogitechButton OUTTAKE = LogitechButton.RIGHT_TRIGGER;
+    public static final LogitechButton OVERRIDE_ELEVATOR_GATE = LogitechButton.SELECT; // FIXME bind to something else
 
     public static final LogitechButton SHOOT_FENDER = LogitechButton.A;
     public static final LogitechButton SHOOT_GENERAL = LogitechButton.X;

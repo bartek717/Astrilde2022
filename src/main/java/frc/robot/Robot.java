@@ -138,13 +138,14 @@ public class Robot extends TitanBot {
     //ColorSensorV3 leftColorSensor = new ColorSensorV3(RobotMap.LEFT_COLOR_SENSOR_PORT);
     //ColorSensorV3 rightColorSensor = new ColorSensorV3(RobotMap.RIGHT_COLOR_SENSOR_PORT);
     Ultrasonic intakeSensor = new Ultrasonic(RobotMap.INTAKE_ULTRASONIC_PORTS[0], RobotMap.INTAKE_ULTRASONIC_PORTS[1]);
+    // intakeSensor.setEnabled(true);
     this.intake = new IntakeImpl(intakeMotorController, intakeSensor);
 
     // SHOOTER COMPONENTS
     TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
-    shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
-    shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
+    shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 75, 2));
+    shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 50, 4));
     TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
     this.shooter = new PIDShooterImpl(turretMotor, shooterMotor, hoodMotor);
 
@@ -152,6 +153,8 @@ public class Robot extends TitanBot {
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
     Ultrasonic elevatorSensor = new Ultrasonic(RobotMap.ELEVATOR_ULTRASONIC_PORTS[0], RobotMap.ELEVATOR_ULTRASONIC_PORTS[1]);
     this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor);
+
+    // Ultrasonic.setAutomaticMode(true);
 
     this.ballSubsystem = new BallPathImpl(intake, elevator, shooter);
 
@@ -219,7 +222,7 @@ public class Robot extends TitanBot {
     drive.resetEncoderTicks();
     switch (m_autoSelected) {
       case kCustomAuto:
-        double autoDistance = 24;
+        double autoDistance = 27;
         auto.setDriveDistance(autoDistance);
         auto.prepareToShoot();
         Timer.delay(1);
@@ -266,6 +269,7 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.INTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
     this.operatorPad.bind(ControllerBindings.OUTTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.OUT));
     this.operatorPad.bind(ControllerBindings.OUTTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
+    this.operatorPad.bind(ControllerBindings.OVERRIDE_ELEVATOR_GATE, this.elevator::setGateOverride);
 
     this.operatorPad.bind(ControllerBindings.SHOOT_FENDER, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTFENDER));
     this.operatorPad.bind(ControllerBindings.SHOOT_FENDER, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
