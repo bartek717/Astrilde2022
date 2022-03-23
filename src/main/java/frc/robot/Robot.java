@@ -41,6 +41,7 @@ import frc.robot.subsystems.BallPath.Intake.IntakeImpl;
 import frc.robot.subsystems.BallPath.Shooter.Shooter;
 import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 import frc.robot.subsystems.BallPath.Shooter.PIDShooterImpl;
+import frc.robot.subsystems.BallPath.Shooter.PIDShooterTrackingImpl;
 import frc.robot.subsystems.BallPath.Shooter.RawShooterImpl;
 import frc.robot.subsystems.Climber.Climber;
 import frc.robot.subsystems.Drivetrain.Drive;
@@ -147,7 +148,7 @@ public class Robot extends TitanBot {
     shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
     shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
     TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
-    this.shooter = new PIDShooterImpl(turretMotor, shooterMotor, hoodMotor);
+    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, drive);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
