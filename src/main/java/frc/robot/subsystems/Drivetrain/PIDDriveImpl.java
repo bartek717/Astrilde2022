@@ -269,17 +269,4 @@ public class PIDDriveImpl extends RepeatingPooledSubsystem implements Drive {
     }
   }
 
-
-    @Override
-    public double getLeftVelocity() {
-      // TODO Auto-generated method stub
-      return 0;
-    }
-
-    @Override
-    public double getRightVelocity() {
-      // TODO Auto-generated method stub
-      return 0;
-    }
-
 }

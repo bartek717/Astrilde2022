@@ -111,21 +111,6 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
         this.leftEncoder.setPosition(0);
         this.rightEncoder.setPosition(0);
     }
-
-    @Override
-    public double getLeftVelocity(){
-      double leftVelocity = leftEncoder.getVelocity();
-      // conversion to m/s from rpm 
-      double leftVelocityMS = leftVelocity * 0.0508 * 0.1047;
-      return leftVelocityMS;
-    }
-    @Override
-    public double getRightVelocity(){
-      double rightVelocity = rightEncoder.getVelocity();
-      // conversion to m/s from rpm
-      double rightVelocityMS = rightVelocity * 0.0508 * 0.1047;
-      return rightVelocityMS;
-    }
     
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {

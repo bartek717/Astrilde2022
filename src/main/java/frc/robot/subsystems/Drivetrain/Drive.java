@@ -9,7 +9,5 @@ public interface Drive extends Subsystem, LifecycleListener {
     double getHeading();
     void resetEncoderTicks();
     Pair<Double, Double> getEncoderTicks();
-    double getLeftVelocity();
-    double getRightVelocity();
 }
 

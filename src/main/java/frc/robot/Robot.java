@@ -26,6 +26,7 @@ import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -65,7 +66,7 @@ public class Robot extends TitanBot {
 
   private Drive drive;
   private LogitechDualAction driverPad;
-  private LogitechDualAction operatorPad;
+  private LogitechDualAction operatorPad;  
   private BallPath ballSubsystem;
   private Intake intake;
   private Elevator elevator;
@@ -144,11 +145,13 @@ public class Robot extends TitanBot {
 
     // SHOOTER COMPONENTS
     TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
+
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
     shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
     shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
-    TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
-    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, drive);
+    // TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
+    CANSparkMax hoodMotor = new CANSparkMax(RobotMap.HOOD_PORT, MotorType.kBrushless);
+    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
@@ -186,6 +189,7 @@ public class Robot extends TitanBot {
    */
   @Override
   public void robotPeriodic() {
+    
   }
 
   /**

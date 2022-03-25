@@ -11,20 +11,19 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.fasterxml.jackson.databind.ser.std.StdArraySerializers.FloatArraySerializer;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import ca.team3161.lib.utils.Utils;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import frc.robot.subsystems.Drivetrain.Drive;
-import frc.robot.subsystems.Drivetrain.PIDDriveImpl;
-import frc.robot.subsystems.Drivetrain.RawDriveImpl;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 
 
 import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
@@ -33,19 +32,20 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     
     private final TalonSRX turretMotor;
     private final TalonFX shooterMotor;
-    private final TalonSRX hoodMotor;
-    private final Drive drive;
+    // private final TalonSRX hoodMotor;
+    private final CANSparkMax hoodMotor;
+
 
     private double kp = PIDShooterImpl.kp; // 0.00175
     private double ki = PIDShooterImpl.ki; // 0.00002
     private double kd = PIDShooterImpl.kd; // 0.00002
 
-    private double leftLimit = 200000.0;
-    private double rightLimit = 200000.0;
+    private double leftLimit = -300000.0;
+    private double rightLimit = 300000.0;
+    private double degreesToTicks = 5555; //  find actual values
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
     private double setPointHood;
-    private double setPointRotation;
     private double setPointShooterPID;
 
     private double shooterEncoderReadingPosition;
@@ -54,6 +54,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private double turretEncoderReadingPosition;
     private double turretHoodVelocity;
     private double turretEncoderReadingVelocity;
+    private Spark blinkinController;
+    private RelativeEncoder turretHoodEncoder;
 
     private boolean turretReady = false;
     private boolean hoodReady = false;
@@ -65,16 +67,15 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
     private final double hoodBuffer = 12500;
     private final double turretBuffer = 30000;
-    private final double turretSpeed = 0.2;
+    private final double turretSpeed = 0.3;
     private final double hoodSpeed = 0.5;
     private final double leftLimitLimelight = -1;
     private final double rightLimitLimelight = 1;
-    private final double lights = 0.0;
-    private final double turretTicksToDegree = 2888; //based off of memory change when given the oppertunity
 
     private final PIDController shooterPid;
     boolean centerUsingLimelight = false;
-    boolean aim = false;
+    boolean aim = true;
+    double currentPosition, error, setpointRotaion;
 
     // LIMELIGHT STUFF
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -95,13 +96,13 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     double heightDif = h2 - h1;
  
 
-    public PIDShooterTrackingImpl(TalonSRX turretMotor, TalonFX shooterMotor, TalonSRX hoodMotor, Drive drive) {
+    public PIDShooterTrackingImpl(TalonSRX turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
         super(10, TimeUnit.MILLISECONDS);
         this.turretMotor = turretMotor;
         this.shooterMotor = shooterMotor;
         this.hoodMotor = hoodMotor;
         this.shooterPid = new PIDController(kp, ki, kd);
-        this.drive = drive;
+        this.blinkinController = new Spark(7);
        
         SmartDashboard.putNumber("Shooter Set Speed", 0);
     }
@@ -118,31 +119,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         this.requestedPosition = shotPosition;
     }
 
-    public double getTimeToTarget(double distance){
-        double hoodDif, distDif, difFromUpper, percentToAdd, amountToAdd;
-        double time = 0;
-        double[] distances = {55.0, 153.0, 202.95, 244.77, 305.66};
-        double[] times = {1, 1.2, 1.8, 2.2, 2.5};
-        for (int i = 1; i < distances.length; i++) {
-            double key = distances[i];
-            if(distance < key){
-                distDif = distances[i] - distances[i-1];
-                hoodDif = times[i] - times[i-1];
-                difFromUpper = distances[i] - distance;
-                percentToAdd = difFromUpper / distDif;
-                amountToAdd = percentToAdd * hoodDif;
-                time = amountToAdd + times[i-1];
-                break;
-            }
-        }
-        return time;
-    }
-
     public double getSetpointHood(double distance){
         double hoodDif, distDif, difFromUpper, percentToAdd, amountToAdd;
         double returnAmount = 0;
         double[] distances = {55.0, 153.0, 202.95, 244.77, 305.66};
-        int[] hoodValues = {100_000, 230_000, 300_000, 330_000, 400_000};
+        int[] hoodValues = {100_000, 375_000, 450_000, 500_000, 550_000};
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
             if(distance < key){
@@ -178,7 +159,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         }
         return returnAmount;
     }
-    // can probably end up making all of these into one call if we want to
 
 
     @Override
@@ -186,8 +166,10 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         // getting and posting encoder reading positions for turret, hood and shooter
         shooterEncoderReadingPosition = shooterMotor.getSelectedSensorPosition();
         shooterEncoderReadingVelocity = shooterMotor.getSelectedSensorVelocity();
-        turretHoodPosition = hoodMotor.getSelectedSensorPosition();
-        turretHoodVelocity = hoodMotor.getSelectedSensorVelocity();
+        // turretHoodPosition = hoodMotor.getSelectedSensorPosition();
+        turretHoodEncoder = hoodMotor.getEncoder();
+        turretHoodPosition = turretHoodEncoder.getPosition();
+        // turretHoodVelocity = hoodMotor.getSelectedSensorVelocity();
         turretEncoderReadingPosition = this.turretMotor.getSelectedSensorPosition();
         turretEncoderReadingVelocity = this.turretMotor.getSelectedSensorVelocity();
 
@@ -206,27 +188,56 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 break;
             case GENERAL:
                 aim = true;
+                setPointHood = getSetpointHood(totalDistance);
+                System.out.println(setPointHood);
+                setPointShooterPID = getSetpointWheel(totalDistance);
                 shoot = true;
                 break;
             case NONE:
                 shoot = false;
-                setPointShooterPID = 2000;
+                setPointShooterPID = 0;
+                setPointHood = 30_000;
                 aim = true;
-                System.out.println("AIM TRUE");
             case TEST:
             default:
+                setPointHood = 30_000;
                 shoot = false;
-                setPointShooterPID = 2000;
+                setPointShooterPID = 0;
                 aim = true;
                 break;
         }
+        // Getting setpoints and target position
+        if(canSeeTarget == 1.0){
+            System.out.println("CAN SEE TARGET");
+            this.blinkinController.set(0.77);
+        }else if(canSeeTarget == 0.0){
+            this.blinkinController.set(0.61);
+        }
+
+        // hood setpoint
+       
+        if (setPointHood == Double.NEGATIVE_INFINITY) {
+            hoodMotor.set(0);
+            hoodReady = false;
+        } else if(turretHoodPosition >= setPointHood - hoodBuffer && turretHoodPosition <= setPointHood + hoodBuffer){
+            hoodMotor.set(0);
+            hoodReady = true;
+        }else if(turretHoodPosition <= setPointHood - hoodBuffer){
+            hoodMotor.set(hoodSpeed);
+            hoodReady = false;
+        }else if (turretHoodPosition >= setPointHood + hoodBuffer){
+            hoodMotor.set(hoodSpeed);
+            hoodReady = false;
+        }else{
+            hoodReady = false;
+        }
+
         // turret movement
         // if the user does not want to do a fender shot
+        // System.out.println("Before aim");
+        currentPosition = turretEncoderReadingPosition;
         if(aim){
-            double currentLeftVelocity = drive.getLeftVelocity(); 
-            double currentRightVelocity = drive.getRightVelocity();
-            double velocityTrajectory = Math.max(currentLeftVelocity, currentRightVelocity); // I think this is right?
-            System.out.println("AIMING");
+            // System.out.println("aiming");
             // only get the distance if we are aiming
             tx = table.getEntry("tx");
             ty = table.getEntry("ty");
@@ -240,112 +251,67 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             totalAngleRadians = Math.toRadians(totalAngle);
             rs = Math.tan(totalAngleRadians);
             totalDistance = heightDif / rs;
-            // if we are shooting from a standstill
-            if(velocityTrajectory < 0.1){
-                setPointHood = getSetpointHood(totalDistance);
-                setPointShooterPID = getSetpointWheel(totalDistance);
-                // no need to adjust turret on shots with no movement
-                if(turretEncoderReadingPosition > leftLimit && turretEncoderReadingPosition < rightLimit && !flipLeft && !flipRight){
-                    if(canSeeTarget==1.0){
-                        // if we are in the encoder limits, can see the target, and do not want to "flip"
-                        if(x < rightLimitLimelight && x > leftLimitLimelight){
-                            turretMotor.set(ControlMode.PercentOutput, 0);
-                            turretReady = true;
-                        }else if(x > rightLimitLimelight){
-                            turretMotor.set(ControlMode.PercentOutput, turretSpeed);
-                            turretReady = false;
-                        }else if(x<leftLimitLimelight){
-                            turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
-                            turretReady = false;
-                        }
-                    }else{
-                        // if we cannot see the target, flip to one of the limits
-                        if(turretEncoderReadingPosition >= 0){
-                            flipLeft = true;
-                            turretReady = false;
-                        }else if(turretEncoderReadingPosition < 0){
-                            flipRight = true;
-                            turretReady = false;
-                        }
-                    }
-                // if we are past the left limit, flip to the right
-                }else if(turretEncoderReadingPosition < leftLimit || flipRight == true){
-                    flipRight = true;
-                    turretReady = false;
-                    if(turretEncoderReadingPosition < rightLimit - turretBuffer && canSeeTarget == 0.0){
-                        turretMotor.set(ControlMode.PercentOutput, turretSpeed);
-                    }else{
-                        flipRight = false;
-                    }
-                // if we are at the right limit, flip to the left
-                }else if(turretEncoderReadingPosition > rightLimit || flipLeft == true){
-                    turretReady = false;
-                    flipLeft = true;
-                    if(turretEncoderReadingPosition > leftLimit + turretBuffer && canSeeTarget == 0.0){
-                        turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
-                    }else{
-                        flipLeft = false;
-                    }
-                }  
-            // otherwise we are moving at velocity  
-            }else{
-                // restating so its easier for me, will remove later
-                double turretDegree = turretEncoderReadingPosition / turretTicksToDegree;
-                double currentDistance = totalDistance;
-                double velocityTrajectoryMoving = velocityTrajectory;
-                double timeToTarget = getTimeToTarget(currentDistance); // this should be with the actual shot vector but I dont know how that would work
-                double displacement = velocityTrajectoryMoving * timeToTarget;
-                double shootingDistance = Math.sqrt(Math.pow(currentDistance, 2)+Math.pow(displacement, 2)-(2*currentDistance*displacement*Math.cos(Math.toRadians(turretDegree))));
-                double shootingAngle = Math.asin(Math.toRadians(currentDistance*Math.sin(Math.toRadians(turretDegree))/shootingDistance));
-                if (shootingAngle > 50){
-                    shootingAngle = 50;
-                }
-                setPointHood = getSetpointHood(shootingDistance);
-                setPointShooterPID = getSetpointWheel(shootingDistance);
-                if(turretEncoderReadingPosition > leftLimit && turretEncoderReadingPosition < rightLimit && !flipLeft && !flipRight){
-                    if(canSeeTarget==1.0){
-                        // if we are in the encoder limits, can see the target, and do not want to "flip"
-                        if(x < rightLimitLimelight + shootingAngle && x > leftLimitLimelight + shootingAngle){
-                            turretMotor.set(ControlMode.PercentOutput, 0);
-                            turretReady = true;
-                        }else if(x > rightLimitLimelight + shootingAngle){
-                            turretMotor.set(ControlMode.PercentOutput, turretSpeed);
-                            turretReady = false;
-                        }else if(x<leftLimitLimelight + shootingAngle){
-                            turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
-                            turretReady = false;
-                        }
-                    }else{
-                        // if we cannot see the target, flip to one of the limits
-                        if(turretEncoderReadingPosition >= 0){
-                            flipLeft = true;
-                            turretReady = false;
-                        }else if(turretEncoderReadingPosition < 0){
-                            flipRight = true;
-                            turretReady = false;
-                        }
-                    }
-                // if we are past the left limit, flip to the right
-                }else if(turretEncoderReadingPosition < leftLimit || flipRight == true){
-                    flipRight = true;
-                    turretReady = false;
-                    if(turretEncoderReadingPosition < rightLimit - turretBuffer && canSeeTarget == 0.0){
-                        turretMotor.set(ControlMode.PercentOutput, turretSpeed);
-                    }else{
-                        flipRight = false;
-                    }
-                // if we are at the right limit, flip to the left
-                }else if(turretEncoderReadingPosition > rightLimit || flipLeft == true){
-                    turretReady = false;
-                    flipLeft = true;
-                    if(turretEncoderReadingPosition > leftLimit + turretBuffer && canSeeTarget == 0.0){
-                        turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
-                    }else{
-                        flipLeft = false;
-                    }
+            SmartDashboard.putNumber("Distance", totalDistance);
+            System.out.println((turretEncoderReadingPosition > leftLimit) + " " +  (turretEncoderReadingPosition < rightLimit) + " " +  !flipLeft + " " +  !flipRight);
+            if(turretEncoderReadingPosition > leftLimit && turretEncoderReadingPosition < rightLimit && !flipLeft && !flipRight){
+                // System.out.println("Within encoder limits");
+                if(canSeeTarget==1.0){
+                    // System.out.println("Can see target");
+                    // if we are in the encoder limits, can see the target, and do not want to "flip"
+                    if(x < rightLimitLimelight && x > leftLimitLimelight){
+                        turretMotor.set(ControlMode.PercentOutput, 0);
+                        turretReady = true;
+                        error = 0;
 
+                    }else if(x > rightLimitLimelight){
+                        turretMotor.set(ControlMode.PercentOutput, turretSpeed);
+                        turretReady = false;
+                    }else if(x<leftLimitLimelight){
+                        turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
+                        turretReady = false;
+                    }
+                }else{
+                    // if we cannot see the target, flip to one of the limits
+                    if(turretEncoderReadingPosition >= 0){
+                        flipRight = true;
+                        turretReady = false;
+                    }else if(turretEncoderReadingPosition < 0){
+                        flipLeft = true;
+                        turretReady = false;
+                    }
                 }
-            }   
+            // if we are past the left limit, flip to the right
+            }else if(turretEncoderReadingPosition < leftLimit || flipRight == true){
+                System.out.println("FLIPRIGHT");
+                flipRight = true;
+                turretReady = false;
+                if(canSeeTarget == 1.0 && turretEncoderReadingPosition > leftLimit && turretEncoderReadingPosition < rightLimit && x < rightLimitLimelight && x > leftLimitLimelight){
+                    flipRight = false;
+                    System.out.println("FLIPRIGHT FALSE");
+                }else if(turretEncoderReadingPosition < rightLimit - turretBuffer){
+                    System.out.println("Setting turret positive");
+                    turretMotor.set(ControlMode.PercentOutput, turretSpeed);
+                }else{
+                    System.out.println("FLIPRIGHTFALSE2");
+                    flipRight = false;
+                }
+            // if we are at the right limit, flip to the left
+            }else if(turretEncoderReadingPosition > rightLimit || flipLeft == true){
+                System.out.println("FLIPLEFT");
+                turretReady = false;
+                flipLeft = true;
+                if(canSeeTarget == 1.0 && turretEncoderReadingPosition > leftLimit && turretEncoderReadingPosition < rightLimit && x < rightLimitLimelight && x > leftLimitLimelight){
+                    flipLeft = false;
+                    System.out.println("FLIPLEFT FALSE");
+                }else if(turretEncoderReadingPosition > leftLimit + turretBuffer){
+                    System.out.println("Setting turret negative");
+                    turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
+                }else{
+                    System.out.println("FLIPLEFT FALSE 2");
+                    flipLeft = false;
+                }
+            }    
+        
         // if we want to shoot the fender shot, set the turret position to be 0 (straight)
         // this may change if we have a turret that can turn 180 degrees
         }else{
@@ -361,6 +327,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             }
         }
         
+
+
         // setpoint for the shooter wheel
 
         if(setPointShooterPID != 0){
@@ -371,25 +339,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             currentOutput = 0;
         }
         this.shooterMotor.set(ControlMode.PercentOutput, currentOutput);
-
-        // hood setpoint
-        if(shoot){
-            if (setPointHood == Double.NEGATIVE_INFINITY) {
-                hoodMotor.set(ControlMode.PercentOutput, 0);
-                hoodReady = false;
-             } else if(turretHoodPosition >= setPointHood - hoodBuffer && turretHoodPosition <= setPointHood + hoodBuffer){
-                hoodMotor.set(ControlMode.PercentOutput, 0);
-                hoodReady = true;
-            }else if(turretHoodPosition <= setPointHood - hoodBuffer){
-                hoodMotor.set(ControlMode.PercentOutput, hoodSpeed);
-                hoodReady = false;
-            }else if (turretHoodPosition >= setPointHood + hoodBuffer){
-                hoodMotor.set(ControlMode.PercentOutput, -hoodSpeed);
-                hoodReady = false;
-            }
-        }else{
-            hoodReady = false;
-        }
     }
 
     @Override
@@ -433,14 +382,15 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
     @Override
     public void resetSensors() {
-        this.hoodMotor.setSelectedSensorPosition(0);
+        
     }
 
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {
         switch (current) {
             case ON_INIT:
-                this.hoodMotor.setSelectedSensorPosition(0);
+                // this.hoodMotor.setSelectedSensorPosition(0);
+                this.turretHoodEncoder.setPosition(0);
             case ON_AUTO:
             case ON_TELEOP:
             case ON_TEST:
@@ -452,7 +402,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case NONE:
             default:
                 this.cancel();
-                this.hoodMotor.setSelectedSensorPosition(0);
+                this.turretHoodEncoder.setPosition(0);
                 break;
         }
     }
