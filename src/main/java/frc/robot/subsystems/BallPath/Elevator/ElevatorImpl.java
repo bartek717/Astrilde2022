@@ -93,9 +93,6 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
             case PRIME:
                 // checking for ball
                 detectedColor = elevatorColorSensor.getColor();
-                SmartDashboard.putNumber("Red", detectedColor.red);
-                SmartDashboard.putNumber("Green", detectedColor.green);
-                SmartDashboard.putNumber("Blue", detectedColor.blue);
                 // System.out.println("Elevator: Priming");
                 if(detectedColor.red > 0.31){
                     detectedColorElevator = 1;
@@ -133,9 +130,6 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                 count ++;
                 if (!ballPresent || (count % 10) == 0){
                     detectedColor = elevatorColorSensor.getColor();
-                    SmartDashboard.putNumber("Red", detectedColor.red);
-                    SmartDashboard.putNumber("Green", detectedColor.green);
-                    SmartDashboard.putNumber("Blue", detectedColor.blue);
                     if(detectedColor.red > 0.31){
                         detectedColorElevator = 1;
                     }else if(detectedColor.blue > 0.31){

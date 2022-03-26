@@ -147,6 +147,7 @@ public class Robot extends TitanBot {
     // SHOOTER COMPONENTS
     CANSparkMax turretMotor = new CANSparkMax(RobotMap.TURRET_PORT, MotorType.kBrushless);
     turretMotor.restoreFactoryDefaults();
+    turretMotor.setInverted(true);
     // TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
 
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
