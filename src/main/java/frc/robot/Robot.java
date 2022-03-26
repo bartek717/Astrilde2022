@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -144,13 +145,17 @@ public class Robot extends TitanBot {
     this.intake = new IntakeImpl(intakeMotorController, intakeSensor);
 
     // SHOOTER COMPONENTS
-    TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
+    CANSparkMax turretMotor = new CANSparkMax(RobotMap.TURRET_PORT, MotorType.kBrushless);
+    turretMotor.restoreFactoryDefaults();
+    // TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
 
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
     shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
     shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
     // TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
     CANSparkMax hoodMotor = new CANSparkMax(RobotMap.HOOD_PORT, MotorType.kBrushless);
+    hoodMotor.restoreFactoryDefaults();
+    hoodMotor.setInverted(true);
     this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor);
 
     // ELEVATOR COMPONENTS
@@ -189,7 +194,9 @@ public class Robot extends TitanBot {
    */
   @Override
   public void robotPeriodic() {
-    
+
+    // double ticks = ((PIDShooterTrackingImpl) this.shooter).getHoodMotor().getEncoder().getCountsPerRevolution() * ((PIDShooterTrackingImpl) this.shooter).getHoodMotor().getEncoder().getPosition();
+    // SmartDashboard.putNumber("Hooder Encoder Reading", ticks);
   }
 
   /**

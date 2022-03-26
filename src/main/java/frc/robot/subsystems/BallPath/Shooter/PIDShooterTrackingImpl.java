@@ -30,7 +30,7 @@ import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
 
 public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implements Shooter {
     
-    private final TalonSRX turretMotor;
+    private final CANSparkMax turretMotor;
     private final TalonFX shooterMotor;
     // private final TalonSRX hoodMotor;
     private final CANSparkMax hoodMotor;
@@ -56,6 +56,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private double turretEncoderReadingVelocity;
     private Spark blinkinController;
     private RelativeEncoder turretHoodEncoder;
+    private RelativeEncoder turretEncoder;
 
     private boolean turretReady = false;
     private boolean hoodReady = false;
@@ -96,11 +97,13 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     double heightDif = h2 - h1;
  
 
-    public PIDShooterTrackingImpl(TalonSRX turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
+    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
         super(10, TimeUnit.MILLISECONDS);
         this.turretMotor = turretMotor;
+        this.turretEncoder = turretMotor.getEncoder();
         this.shooterMotor = shooterMotor;
         this.hoodMotor = hoodMotor;
+        this.turretHoodEncoder = hoodMotor.getEncoder();
         this.shooterPid = new PIDController(kp, ki, kd);
         this.blinkinController = new Spark(7);
        
@@ -160,6 +163,10 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         return returnAmount;
     }
 
+    
+    public CANSparkMax getHoodMotor(){
+        return this.hoodMotor;
+    }
 
     @Override
     public void task(){
@@ -167,18 +174,17 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         shooterEncoderReadingPosition = shooterMotor.getSelectedSensorPosition();
         shooterEncoderReadingVelocity = shooterMotor.getSelectedSensorVelocity();
         // turretHoodPosition = hoodMotor.getSelectedSensorPosition();
-        turretHoodEncoder = hoodMotor.getEncoder();
-        turretHoodPosition = turretHoodEncoder.getPosition();
-        // turretHoodVelocity = hoodMotor.getSelectedSensorVelocity();
-        turretEncoderReadingPosition = this.turretMotor.getSelectedSensorPosition();
-        turretEncoderReadingVelocity = this.turretMotor.getSelectedSensorVelocity();
 
-        SmartDashboard.putNumber("Shooter Encoder reading position", shooterEncoderReadingPosition);
+        turretHoodPosition = turretHoodEncoder.getPosition() * turretHoodEncoder.getCountsPerRevolution();
+        // turretHoodVelocity = hoodMotor.getSelectedSensorVelocity();
+
+        turretEncoderReadingPosition = turretEncoder.getPosition() * turretEncoder.getCountsPerRevolution();
+
+        SmartDashboard.putNumber("Shooter Encoder Reading position", shooterEncoderReadingPosition);
         SmartDashboard.putNumber("Shooter Encoder Reading Velocity", shooterEncoderReadingVelocity);
         SmartDashboard.putNumber("Turret Encoder Reading Position", turretEncoderReadingPosition);
-        SmartDashboard.putNumber("Turret Encoder Reading Velocity", turretEncoderReadingVelocity);
-        SmartDashboard.putNumber("Turret Hood Encoder reading Position", turretHoodPosition);
-        SmartDashboard.putNumber("Turret Hood Encoder Reading Velocity", turretHoodVelocity);
+        SmartDashboard.putNumber("Hood Encoder reading Position", turretHoodPosition);
+        SmartDashboard.putNumber("Hood Encoder Reading Velocity", turretHoodVelocity);
 
         switch (this.requestedPosition) {
             case FENDER:
@@ -189,7 +195,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case GENERAL:
                 aim = true;
                 setPointHood = getSetpointHood(totalDistance);
-                System.out.println(setPointHood);
                 setPointShooterPID = getSetpointWheel(totalDistance);
                 shoot = true;
                 break;
@@ -206,6 +211,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 aim = true;
                 break;
         }
+        
+        SmartDashboard.putNumber("Hood Encoder Set Point", setPointHood);
         // Getting setpoints and target position
         if(canSeeTarget == 1.0){
             System.out.println("CAN SEE TARGET");
@@ -259,15 +266,15 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                     // System.out.println("Can see target");
                     // if we are in the encoder limits, can see the target, and do not want to "flip"
                     if(x < rightLimitLimelight && x > leftLimitLimelight){
-                        turretMotor.set(ControlMode.PercentOutput, 0);
+                        turretMotor.set(0);
                         turretReady = true;
                         error = 0;
 
                     }else if(x > rightLimitLimelight){
-                        turretMotor.set(ControlMode.PercentOutput, turretSpeed);
+                        turretMotor.set(turretSpeed);
                         turretReady = false;
                     }else if(x<leftLimitLimelight){
-                        turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
+                        turretMotor.set(-turretSpeed);
                         turretReady = false;
                     }
                 }else{
@@ -290,7 +297,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                     System.out.println("FLIPRIGHT FALSE");
                 }else if(turretEncoderReadingPosition < rightLimit - turretBuffer){
                     System.out.println("Setting turret positive");
-                    turretMotor.set(ControlMode.PercentOutput, turretSpeed);
+                    turretMotor.set(turretSpeed);
                 }else{
                     System.out.println("FLIPRIGHTFALSE2");
                     flipRight = false;
@@ -305,7 +312,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                     System.out.println("FLIPLEFT FALSE");
                 }else if(turretEncoderReadingPosition > leftLimit + turretBuffer){
                     System.out.println("Setting turret negative");
-                    turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
+                    turretMotor.set(-turretSpeed);
                 }else{
                     System.out.println("FLIPLEFT FALSE 2");
                     flipLeft = false;
@@ -316,13 +323,13 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         // this may change if we have a turret that can turn 180 degrees
         }else{
             if(turretEncoderReadingPosition >= 0 - turretBuffer && turretEncoderReadingPosition <= 0 + turretBuffer){
-                turretMotor.set(ControlMode.PercentOutput, 0);
+                turretMotor.set(0);
                 turretReady = true;
             }else if(turretEncoderReadingPosition <= 0 - turretBuffer){
-                turretMotor.set(ControlMode.PercentOutput, turretSpeed);
+                turretMotor.set(turretSpeed);
                 turretReady = false;
             }else if (turretEncoderReadingPosition >= 0 + turretBuffer){
-                turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
+                turretMotor.set(-turretSpeed);
                 turretReady  = false;
             }
         }

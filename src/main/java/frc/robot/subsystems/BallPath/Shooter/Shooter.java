@@ -1,5 +1,7 @@
 package frc.robot.subsystems.BallPath.Shooter;
 
+import com.revrobotics.CANSparkMax;
+
 import ca.team3161.lib.robot.LifecycleListener;
 import ca.team3161.lib.robot.subsystem.Subsystem;
 
@@ -13,6 +15,7 @@ public interface Shooter extends Subsystem, LifecycleListener {
     void stopMotors();
     void setShotPosition(ShotPosition shotPosition);
     void resetSensors();
+    // CANSparkMax getHoodMotor();
 
     enum ShotPosition {
         NONE,
