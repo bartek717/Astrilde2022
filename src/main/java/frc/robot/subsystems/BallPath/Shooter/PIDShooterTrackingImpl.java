@@ -134,14 +134,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         turret_PIDController.setFF(turret_kFF);
         turret_PIDController.setOutputRange(turret_kMinOutput, turret_kMaxOutput);
 
-        SmartDashboard.putNumber("Turret P Gain", turret_kP);
-        SmartDashboard.putNumber("Turret I Gain", turret_kI);
-        SmartDashboard.putNumber("Turret D Gain", turret_kD);
-        SmartDashboard.putNumber("Turret I Zone", turret_kIz);
-        SmartDashboard.putNumber("Turret Feed Forward", turret_kFF);
-        SmartDashboard.putNumber("Turret Max Output", turret_kMaxOutput);
-        SmartDashboard.putNumber("Turret Min Output", turret_kMinOutput);
-        SmartDashboard.putNumber("Turret Set Rotations", 0);
         // Shooter Wheel
         this.shooterMotor = shooterMotor;
         this.shooterPid = new PIDController(kp, ki, kd);
@@ -156,15 +148,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         hood_PIDController.setIZone(hood_kIz);
         hood_PIDController.setFF(hood_kFF);
         hood_PIDController.setOutputRange(hood_kMinOutput, hood_kMaxOutput);
-
-        SmartDashboard.putNumber("Hood P Gain", hood_kP);
-        SmartDashboard.putNumber("Hood I Gain", hood_kI);
-        SmartDashboard.putNumber("Hood D Gain", hood_kD);
-        SmartDashboard.putNumber("Hood I Zone", hood_kIz);
-        SmartDashboard.putNumber("Hood Feed Forward", hood_kFF);
-        SmartDashboard.putNumber("Hood Max Output", hood_kMaxOutput);
-        SmartDashboard.putNumber("Hood Min Output", hood_kMinOutput);
-        SmartDashboard.putNumber("Hood Set Rotations", 0);
 
         // LEDs
         this.blinkinController = new Spark(7);
@@ -234,68 +217,25 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         // getting and posting encoder reading positions for turret, hood and shooter
         shooterEncoderReadingPosition = shooterMotor.getSelectedSensorPosition();
         shooterEncoderReadingVelocity = shooterMotor.getSelectedSensorVelocity();
-        // turretHoodPosition = hoodMotor.getSelectedSensorPosition();
-
         hoodAngle = hoodEncoder.getPosition();
-        // turretHoodVelocity = hoodMotor.getSelectedSensorVelocity();
-
         turretRotation = turretEncoder.getPosition();
 
         SmartDashboard.putNumber("Shooter Position", shooterEncoderReadingPosition);
         SmartDashboard.putNumber("Shooter Velocity", shooterEncoderReadingVelocity);
-        //SmartDashboard.putNumber("Turret Position", turretEncoderReadingPosition);
-        //SmartDashboard.putNumber("Hood Position", turretHoodPosition);
-
-        
-        
-
-        double tP = SmartDashboard.getNumber("Turret P Gain", 0);
-        double tI = SmartDashboard.getNumber("Turret I Gain", 0);
-        double tD = SmartDashboard.getNumber("Turret D Gain", 0);
-        double tIz = SmartDashboard.getNumber("Turret I Zone", 0);
-        double tFF = SmartDashboard.getNumber("Turret Feed Forward", 0);
-        double tMax = SmartDashboard.getNumber("Turret Max Output", 0);
-        double tMin = SmartDashboard.getNumber("Turret Min Output", 0);
-        // double tRotations = SmartDashboard.getNumber("Turret Set Rotations", 0);
-
-        if((tP != turret_kP)) { turret_PIDController.setP(tP); turret_kP = tP; }
-        if((tI != turret_kI)) { turret_PIDController.setI(tI); turret_kI = tI; }
-        if((tD != turret_kD)) { turret_PIDController.setD(tD); turret_kD = tD; }
-        if((tIz != turret_kIz)) { turret_PIDController.setIZone(tIz); turret_kIz = tIz; }
-        if((tFF != turret_kFF)) { turret_PIDController.setFF(tFF); turret_kFF = tFF; }
-        if((tMax != turret_kMaxOutput) || (tMin != turret_kMinOutput)) { 
-            turret_PIDController.setOutputRange(tMin, tMax); 
-            turret_kMinOutput = tMin; turret_kMaxOutput = tMax; 
-        }
-
-        // turret_PIDController.setReference(tRotations, CANSparkMax.ControlType.kPosition);
-
-        // SmartDashboard.putNumber("Turret SetPoint", tRotations);
         SmartDashboard.putNumber("Turret Position", turretEncoder.getPosition());
-
-        double hP = SmartDashboard.getNumber("Hood P Gain", 0);
-        double hI = SmartDashboard.getNumber("Hood I Gain", 0);
-        double hD = SmartDashboard.getNumber("Hood D Gain", 0);
-        double hIz = SmartDashboard.getNumber("Hood I Zone", 0);
-        double hFF = SmartDashboard.getNumber("Hood Feed Forward", 0);
-        double hMax = SmartDashboard.getNumber("Hood Max Output", 0);
-        double hMin = SmartDashboard.getNumber("Hood Min Output", 0);
-        // double hRotations = SmartDashboard.getNumber("Hood Set Rotations", 0);
-
-        if((hP != hood_kP)) { hood_PIDController.setP(hP); hood_kP = hP; }
-        if((hI != hood_kI)) { hood_PIDController.setI(hI); hood_kI = hI; }
-        if((hD != hood_kD)) { hood_PIDController.setD(hD); hood_kD = hD; }
-        if((hIz != hood_kIz)) { hood_PIDController.setIZone(hIz); hood_kIz = hIz; }
-        if((hFF != hood_kFF)) { hood_PIDController.setFF(hFF); hood_kFF = hFF; }
-        if((hMax != hood_kMaxOutput) || (hMin != hood_kMinOutput)) { 
-            hood_PIDController.setOutputRange(hMin, hMax); 
-            hood_kMinOutput = hMin; hood_kMaxOutput = hMax; 
-        }
-
-        // hood_PIDController.setReference(hRotations, CANSparkMax.ControlType.kPosition);
-
-        // SmartDashboard.putNumber("Hood SetPoint", hRotations);
         SmartDashboard.putNumber("Hood Position", hoodEncoder.getPosition());
+
+        // getting limelight values and total distance
+        tx = table.getEntry("tx");
+        ty = table.getEntry("ty");
+        tv = table.getEntry("tv");
+        x = tx.getDouble(0.0);
+        y = ty.getDouble(0.0);
+        canSeeTarget = tv.getDouble(0.0);
+        totalAngle = a1+y;
+        totalAngleRadians = Math.toRadians(totalAngle);
+        rs = Math.tan(totalAngleRadians);
+        totalDistance = heightDif / rs;
         
 
         switch (this.requestedPosition) {
@@ -315,69 +255,83 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointHood = 30;
                 shoot = false;
                 setPointShooterPID = 0;
-                setPointRotation = 0;
                 aim = true;
                 break;
         }
 
+        // setting hood setpoint
         hood_PIDController.setReference(setPointHood, CANSparkMax.ControlType.kPosition);
         SmartDashboard.putNumber("Hood SetPoint", setPointHood);
+
+        if(aim){
+            if(turretRotation > leftLimit && turretRotation < rightLimit){
+                if(canSeeTarget == 1.0 && !flipRight && !flipLeft){
+                    if(x < rightLimitLimelight && x > leftLimitLimelight){
+                        turretReady = true;
+                        setPointRotation = turretRotation;
+                    }else{
+                        setPointRotation = turretRotation + x*.8333;
+                        if(setPointRotation >= leftLimit){
+                            setPointRotation = rightLimit-1;
+                            flipRight = true;
+                        }else if(setPointRotation <= rightLimit){
+                            setPointRotation = leftLimit+1;
+                            flipLeft = true;
+                        }
+                    }
+                }else{
+                    // flip right
+                    if(turretRotation <= 0 || flipRight == true){
+                        setPointRotation = rightLimit -1;
+                        if(canSeeTarget == 1.0){
+                            if(turretRotation + x*.8333 > leftLimit && turretRotation + x*.8333 < rightLimit){
+                                flipRight = false;
+                                setPointRotation = turretRotation + x*.8333;
+                            }
+                        }
+                        if(setPointRotation > rightLimit - 2 && setPointRotation < rightLimit){
+                            flipRight = false;
+                        }
+                    // flip left
+                    }else if(turretRotation >= 0 || flipLeft == true){
+                        setPointRotation = leftLimit-1;
+                        if(canSeeTarget == 1.0){
+                            if(turretRotation + x*.8333 > leftLimit && turretRotation + x*.8333 < rightLimit){
+                                flipRight = false;
+                                setPointRotation = turretRotation + x*.8333;
+                            }
+                        }
+                        if(setPointRotation < leftLimit + 2 && setPointRotation > leftLimit){
+                            flipLeft = false;
+                        }
+                    }
+                }
+                // flip left until you see a target?
+            // just get back in the limits
+            }else if(turretRotation < leftLimit){
+                setPointRotation = leftLimit+1;
+            }else if(turretRotation < rightLimit){
+                setPointRotation = rightLimit-1;
+            }
+        }
+
         turret_PIDController.setReference(setPointRotation, CANSparkMax.ControlType.kPosition);
         SmartDashboard.putNumber("Turret SetPoint", setPointRotation);
 
-        
+
+        // shooter wheel
+        if(setPointShooterPID != 0){
+            currentOutput = shooterPid.calculate(shooterEncoderReadingVelocity, setPointShooterPID);
+            currentOutput += 0.01; // hack "feed forward"
+            currentOutput = Utils.normalizePwm(currentOutput);
+        } else {
+            currentOutput = 0;
+        }
+        this.shooterMotor.set(ControlMode.PercentOutput, currentOutput);
 
 
-
-
-        if(aim){
-            System.out.println("aiming");
-            // only get the distance if we are aiming
-            tx = table.getEntry("tx");
-            ty = table.getEntry("ty");
-            ta = table.getEntry("ta");
-            tv = table.getEntry("tv");
-            x = tx.getDouble(0.0);
-            y = ty.getDouble(0.0);
-            a = ta.getDouble(0.0);
-            canSeeTarget = tv.getDouble(0.0);
-            totalAngle = a1+y;
-            totalAngleRadians = Math.toRadians(totalAngle);
-            rs = Math.tan(totalAngleRadians);
-            totalDistance = heightDif / rs;
-            SmartDashboard.putNumber("Distance", totalDistance);
-            if(turretRotation > leftLimit && turretRotation < rightLimit && !flipLeft && !flipRight){
-                // System.out.println("Within encoder limits");
-                if(canSeeTarget==1.0){
-                    System.out.println("Can see target");
-                    // if we are in the encoder limits, can see the target, and do not want to "flip"
-                    if(x < rightLimitLimelight && x > leftLimitLimelight){
-                        turretReady = true;
-                        //error = 0;
-                    }
-                    else{
-                        turretReady = false;
-                    }
-                    setPointRotation = turretRotation + (x*.3333);
-                    System.out.println(x + " " + x*.333333 + " " + setPointRotation);
-                    if (!(turretRotation >= setPointRotation - 1 && turretRotation <= setPointRotation + 1)){
-                        turret_PIDController.setReference(setPointRotation, CANSparkMax.ControlType.kPosition);
-                        SmartDashboard.putNumber("Turret SetPoint", setPointRotation);
-                    }
-                }
-                // else{
-                //     // if we cannot see the target, flip to one of the limits
-                //     if(turretRotation >= 0){
-                //         flipRight = true;
-                //         turretReady = false;
-                //     }else if(turretRotation < 0){
-                //         flipLeft = true;
-                //         turretReady = false;
-                //     }
-                // }
-            }
-        }    
-    }
+    }    
+    
 
     @Override
     public void findAndCenterTarget() {}
