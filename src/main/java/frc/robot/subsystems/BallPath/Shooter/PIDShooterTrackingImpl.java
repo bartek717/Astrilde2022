@@ -383,10 +383,19 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     @Override
     public boolean readyToShoot(){
         boolean shooterReady = false;
+        boolean turretReady = false;
+        boolean hoodReady = false;
         if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 500 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 500){
             shooterReady = true;
         }
+        if(turretRotation > setPointRotation - 1 && turretRotation < setPointRotation + 1){
+            turretReady = true;
+        }
+        if(hoodAngle > setPointHood - 1 && hoodAngle < setPointHood + 1){
+            hoodReady = true;
+        }
         return turretReady && shooterReady && hoodReady;
+        
     }
 
     @Override
