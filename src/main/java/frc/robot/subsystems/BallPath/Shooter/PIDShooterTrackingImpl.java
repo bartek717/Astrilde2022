@@ -72,8 +72,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private final double turretBuffer = 30000;
     private final double turretSpeed = 0.05;
     private final double hoodSpeed = 0.5;
-    private final double leftLimitLimelight = -1;
-    private final double rightLimitLimelight = 1;
+    private final double leftLimitLimelight = -0.3;
+    private final double rightLimitLimelight = 0.3;
 
     private final PIDController shooterPid;
     boolean centerUsingLimelight = false;
@@ -83,13 +83,13 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     
     // ### TURRET ROTATION PID ###
     private SparkMaxPIDController turret_PIDController;
-    public double turret_kP = 0.5; 
-    public double turret_kI = 0.000010;
+    public double turret_kP = 0.14; 
+    public double turret_kI = 0.000002;
     public double turret_kD = 0.05;
     public double turret_kIz = 0;
     public double turret_kFF = 0;
-    public double turret_kMaxOutput = 0.3;
-    public double turret_kMinOutput = -0.3;
+    public double turret_kMaxOutput = 0.6;
+    public double turret_kMinOutput = -0.6;
     // public double turret_kMaxOutputsearch = 0.3;
     // public double turret_kMinOutputsearch = 0.3;
 
@@ -118,9 +118,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     // System.out.println(y);
     double h2 = 103; // HEIGHT OF TARGET
     double h1 = 35; // HEIGHT OF LIMELIGHT
-    double conversion = 0.2;
+    double conversion = 0.8333;
 
     double heightDif = h2 - h1;
+    int seen = 0;
+    long logItter = 0;
  
 
     public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
@@ -255,7 +257,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 shoot = true;
                 break;
             default:
-                setPointHood = 30;
+                setPointHood = 5;
                 shoot = false;
                 setPointShooterPID = 0;
                 aim = true;
@@ -265,17 +267,23 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         // setting hood setpoint
         hood_PIDController.setReference(setPointHood, CANSparkMax.ControlType.kPosition);
         SmartDashboard.putNumber("Hood SetPoint", setPointHood);
-
         if(aim){
             if(turretRotation > leftLimit && turretRotation < rightLimit){
                 if(canSeeTarget == 1.0 && !flipRight && !flipLeft){
+                    // System.out.println("can see");
+                    seen = 0;
                     // System.out.println("Can see target and in limits");
                     if(x < rightLimitLimelight && x > leftLimitLimelight){
+                        SmartDashboard.putNumber("Within limits", 1);
                         turretReady = true;
                         setPointRotation = turretRotation;
                     }else{
                         setPointRotation = turretRotation + x*conversion;
-                        
+                        SmartDashboard.putNumber("Within limits", 0);
+                        SmartDashboard.putNumber("x", x);
+                        SmartDashboard.putNumber("x conversion", x*conversion);
+                        SmartDashboard.putNumber("setPointRotation", setPointRotation);
+                        SmartDashboard.putNumber("turretRotation", turretRotation);
                         if(setPointRotation <= leftLimit){
                             setPointRotation = rightLimit-1;
                             flipRight = true;
@@ -284,33 +292,45 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                             flipLeft = true;
                         }
                     }
-                }else{
+                }else if (seen > 20){
+
                     // System.out.println("Cannot see target");
                     // flip right
-                    if(turretRotation <= 0 || flipRight == true){
-                        setPointRotation = rightLimit -1;
+                    if(flipLeft){
                         if(canSeeTarget == 1.0){
                             if(turretRotation + x*conversion > leftLimit && turretRotation + x*conversion < rightLimit){
                                 flipRight = false;
                                 setPointRotation = turretRotation + x*conversion;
                             }
-                        }
-                        if(setPointRotation > rightLimit - 2 && setPointRotation < rightLimit){
-                            flipRight = false;
+                        
+                        }else if (turretRotation <= -80){
+                            setPointRotation = rightLimit -1;
+                            flipRight=true;
+                            flipLeft = false;
+                            
                         }
                     // flip left
-                    }else if(turretRotation >= 0 || flipLeft == true){
-                        setPointRotation = leftLimit-1;
+                    }else if (flipRight){
                         if(canSeeTarget == 1.0){
                             if(turretRotation + x*conversion > leftLimit && turretRotation + x*conversion < rightLimit){
                                 flipRight = false;
                                 setPointRotation = turretRotation + x*conversion;
                             }
-                        }
-                        if(setPointRotation < leftLimit + 2 && setPointRotation > leftLimit){
-                            flipLeft = false;
+                        }else if (turretRotation >= 80){
+                            setPointRotation = leftLimit+1;
+                            flipLeft=true;
+                            flipRight = false;
+                            
                         }
                     }
+                    else{
+                        setPointRotation=leftLimit-1;
+                        flipLeft=true;
+                    }
+                }
+                else{
+                    seen ++;
+                    // System.out.println("counting");
                 }
                 // flip left until you see a target?
             // just get back in the limits
@@ -320,10 +340,10 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointRotation = rightLimit-1;
             }
         }
-        System.out.println("Set point rotation" + setPointRotation);
-        System.out.println("Current turret Rotation" + turretRotation);
+        // System.out.println("Set point rotation" + setPointRotation);
+        // System.out.println("Current turret Rotation" + turretRotation);
         turret_PIDController.setReference(setPointRotation, CANSparkMax.ControlType.kPosition);
-        SmartDashboard.putNumber("Turret SetPoint", setPointRotation);
+        // SmartDashboard.putNumber("Turret SetPoint", setPointRotation);
 
 
         // shooter wheel
