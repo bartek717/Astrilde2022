@@ -41,8 +41,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private double ki = PIDShooterImpl.ki; // 0.00002
     private double kd = PIDShooterImpl.kd; // 0.00002
 
-    private double leftLimit = -90.0;
-    private double rightLimit = 90.0;
+    private double leftLimit = -120.0;
+    private double rightLimit = 120.0;
     private double degreesToTicks = 5555; //  find actual values
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
@@ -299,11 +299,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                     if(flipLeft){
                         if(canSeeTarget == 1.0){
                             if(turretRotation + x*conversion > leftLimit && turretRotation + x*conversion < rightLimit){
-                                flipRight = false;
+                                flipLeft = false;
                                 setPointRotation = turretRotation + x*conversion;
                             }
                         
-                        }else if (turretRotation <= -80){
+                        }else if (turretRotation <= (leftLimit+10)){
                             setPointRotation = rightLimit -1;
                             flipRight=true;
                             flipLeft = false;
@@ -316,7 +316,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                                 flipRight = false;
                                 setPointRotation = turretRotation + x*conversion;
                             }
-                        }else if (turretRotation >= 80){
+                        }else if (turretRotation >= rightLimit - 10){
                             setPointRotation = leftLimit+1;
                             flipLeft=true;
                             flipRight = false;
