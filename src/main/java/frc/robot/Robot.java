@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import java.sql.Time;
 import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
@@ -60,8 +61,10 @@ import edu.wpi.first.wpilibj.SPI;
  * project.
  */
 public class Robot extends TitanBot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
+  private static final String k5Ball = "Five Ball Auto";
+  private static final String k4Ball = "Four Ball Auto";
+  private static final String k3Ball = "Three Ball Auto";
+  private static final String k2Ball = "Two Ball Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
@@ -93,8 +96,11 @@ public class Robot extends TitanBot {
   @Override
   public void robotSetup() {
     System.out.println("Robot setup start");
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
+    m_chooser.setDefaultOption("Five Ball Auto", k5Ball);
+    m_chooser.setDefaultOption("Four Ball Auto", k4Ball);
+    m_chooser.setDefaultOption("Three Ball Auto", k3Ball);
+    m_chooser.setDefaultOption("Two Ball Auto", k2Ball);
+
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // DRIVETRAIN COMPONENTS
@@ -235,28 +241,63 @@ public class Robot extends TitanBot {
   @Override
   public void autonomousRoutine() throws InterruptedException {
     drive.resetEncoderTicks();
+
+    double[][] targets = {{0, 0}};
+
     switch (m_autoSelected) {
-      case kCustomAuto:
-        double autoDistance = 27;
-        auto.setDriveDistance(autoDistance);
-        auto.prepareToShoot();
-        Timer.delay(1);
-        boolean doneDriving = false;
-        while(!doneDriving){
-          doneDriving = auto.drive(); // Run cycle(drive, intake, elevator, shooter)
-          auto.prepareToShoot();
-          waitFor(20, TimeUnit.MILLISECONDS);
-        }
-        auto.stopDriving();
-        auto.shoot();
-        Timer.delay(4);
-        auto.stop();
+      case k5Ball:
+        targets = new double[][] {
+          {}, 
+          {}, 
+          {}, 
+          {}
+        };
         break;
-      case kDefaultAuto:
+      case k4Ball:
+        targets = new double[][] {
+          {}, 
+          {},
+          {}
+        };
+        break;
+      case k3Ball:
+        targets = new double[][] {
+          {}, 
+          {}, 
+        };
+        break;
+      case k2Ball:
+        targets = new double[][] {
+          {}
+        };
+        break;
       default:
         // Put default auto code here
         break;
     }
+
+    int index = 0;
+    boolean doneAuto = false;
+
+    while (!doneAuto) {
+      if (index == targets.length) {
+        doneAuto = true;
+      }
+      auto.setDriveDistance(targets[index][0]);
+      auto.turn(ahrs, targets[index][1]);
+      Timer.delay(1);
+      boolean doneDriving = false;
+      auto.prepareToShoot();
+      while (!doneDriving) {
+        doneDriving = auto.drive();
+      }
+      auto.stopDriving();
+      auto.shoot();
+      Timer.delay(2);
+      auto.stop();
+      index++;
+    }
+
   }
 
   /** This function is called once when teleop is enabled. */

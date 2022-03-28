@@ -102,6 +102,16 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     }
 
     @Override
+    public CANSparkMax getLeftSide(){
+      return this.leftSide;
+    }
+
+    @Override
+    public CANSparkMax getRightSide(){
+      return this.rightSide;
+    }
+
+    @Override
     public double getHeading() {
         return 0;
     }

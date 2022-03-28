@@ -2,20 +2,17 @@ package frc.robot;
 
 // SUBSYSTEM IMPORTS
 import frc.robot.subsystems.BallPath.BallPath.BallAction;
-import frc.robot.subsystems.BallPath.Elevator.Elevator;
-import frc.robot.subsystems.BallPath.Shooter.Shooter;
-import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 import frc.robot.subsystems.BallPath.BallPath;
+import frc.robot.subsystems.BallPath.Elevator.Elevator;
 import frc.robot.subsystems.Drivetrain.Drive;
 
 import java.util.concurrent.TimeUnit;
 
-import edu.wpi.first.math.Pair;
+import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.CANSparkMax;
 
 // PIDCONTROLLER IMPORTS
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Watchdog;
 import frc.robot.subsystems.BallPath.Intake.Intake;
 
 public class Autonomous {
@@ -24,13 +21,11 @@ public class Autonomous {
     
     private Drive drivetrain;
     private BallPath ballPath;
-    private double wheelCircumference = Math.pow((Math.PI*2), 2);
 
     private double kP = 0.01;
     private double kI = 0.0025;
     private double kD = 0.005;
 
-    private double zRotation = 0;
     private double targetDistance;
 
     interface Waiter {
@@ -41,42 +36,46 @@ public class Autonomous {
 
     private final PIDController positionPIDController;
 
+    private final CANSparkMax leftSide;
+    private final CANSparkMax rightSide;
+
     public Autonomous(Waiter waiter, Drive drivetrain, BallPath ballPath){
         this.waiter = waiter;
         this.drivetrain = drivetrain;
+        this.leftSide = drivetrain.getLeftSide();
+        this.rightSide = drivetrain.getRightSide();
         this.ballPath = ballPath;
         this.positionPIDController = new PIDController(kP, kI, kD);
         this.positionPIDController.setTolerance(DRIVE_DIST_TOLERANCE);
     }
 
-    double calcTicks(double encoderTicks){
-        // Calculates ticks per revolution(shaft rotation)
-        double gearRatio = 8;
+    public void turn(AHRS gyro, double degree) {
+        gyro.reset();
+        double error = degree - gyro.getAngle();
+        double kP = 0.1;
 
-        double ticks = encoderTicks / gearRatio * wheelCircumference; // ticksPer cancels so it's just encoderTicks / gearRatio
+        while (gyro.getAngle() < degree - 2 && gyro.getAngle() > degree + 2){
+            this.leftSide.set(kP * error);
+            this.rightSide.set(-kP * error);
+            error = degree - gyro.getAngle();
+        }
 
-        return ticks;
+        this.leftSide.set(0);
+        this.rightSide.set(0);
     }
 
-    // double convertIT(double distance){
-    //     // Convert Inches to Ticks
-    //     double gearRatio = 8;
-    //     return (distance / wheelCircumference / gearRatio) * 128;
-    // }
 
-    // double convertTI(double ticks){
-    //     // Convert Ticks to Inches
-    //     return ticks * wheelCircumference;
-    // }
+    private double convertIR(double inches){
+        double gearRatio = 5;
+        double wheelCircumference = 2 * Math.PI * 2;
 
-    double positionPIDCalc(Double encoderTicks){
-        // PID for both sides
+        double revs = (inches / wheelCircumference) * gearRatio;
 
-        return positionPIDController.calculate(encoderTicks);
+        return revs;
     }
 
     public void setDriveDistance(double distance) {
-        this.targetDistance = distance;
+        this.targetDistance = convertIR(distance);
         positionPIDController.setSetpoint(this.targetDistance);
     }
 
@@ -85,14 +84,15 @@ public class Autonomous {
         :targetPosition: distance to be driven in inches -> double
         */
 
-        Pair<Double, Double> encoderTicks = this.drivetrain.getEncoderTicks();
+        double dampener = 0.3;
 
-        double averageEncoderTicks = (encoderTicks.getFirst() + encoderTicks.getSecond()) / 2;
+        double position = (this.leftSide.getEncoder().getPosition() + this.rightSide.getEncoder().getPosition()) / 2;
 
-        double nextSpeed = positionPIDCalc(averageEncoderTicks);
+        double nextSpeed = positionPIDController.calculate(position);
 
-        drivetrain.drive(nextSpeed * 0.875 /* fudge it slower */, zRotation);
-
+        if (!positionPIDController.atSetpoint()) {
+            this.drivetrain.drive(nextSpeed * dampener, 0);
+        }
         return positionPIDController.atSetpoint();
     }
 
@@ -101,9 +101,8 @@ public class Autonomous {
         // boolean elevatorLoaded = ballPath.getElevator().ballPrimed();
         // boolean robotFull = intakeLoaded && elevatorLoaded;
 
-        ballPath.setAction(BallPath.BallAction.AUTO);
-        ballPath.getIntake().setAction(Intake.IntakeAction.AUTO);
-        ballPath.getShooter().setShotPosition(Shooter.ShotPosition.TARMAC);
+        ballPath.setAction(BallPath.BallAction.SHOOTGENERAL);
+        ballPath.getIntake().setAction(Intake.IntakeAction.IN);
     }
 
     void shoot() throws InterruptedException {
@@ -115,9 +114,8 @@ public class Autonomous {
     }
 
     void stop(){
-        this.ballPath.setAction(BallAction.NONE);
-        this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
         drivetrain.drive(0, 0);
+        this.ballPath.setAction(BallAction.NONE);
     }
     
 }

@@ -249,6 +249,16 @@ public class PIDDriveImpl extends RepeatingPooledSubsystem implements Drive {
        this.leftPIDController.setReference(leftSetPoint, ControlType.kPosition);
        this.rightPIDController.setReference(rightSetPoint, ControlType.kPosition); 
     }
+
+    @Override
+    public CANSparkMax getLeftSide(){
+      return this.leftSide;
+    }
+
+    @Override
+    public CANSparkMax getRightSide(){
+      return this.rightSide;
+    }
     
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {
