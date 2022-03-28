@@ -25,7 +25,8 @@ public interface Shooter extends Subsystem, LifecycleListener {
         TARMAC,
         TEST,
         TEST2,
-        GENERAL, STARTAIM, STOPAIM
+        GENERAL, 
+        RESET
         ;
     }
 }

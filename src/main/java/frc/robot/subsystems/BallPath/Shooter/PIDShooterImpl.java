@@ -32,6 +32,9 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     static final double kd = 0.00002; // 0.00002
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
+    private int stallCount = 0;
+    private final int stallCountLimit = 100; // 100 * 20ms = 2 second of stall
+    private final double hoodStallCurrent = -12;
     private double setPointHood;
     private double setPointRotation;
     private double setPointShooterPID;
@@ -48,7 +51,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
 
     private double currentOutput;
 
-    private final double hoodBuffer = 12500;
+    private final double hoodBuffer = 10000;
     private final double turretBuffer = 30000;
     private final double turretSpeed = 0.2;
     private final double hoodSpeed = 0.5;
@@ -72,7 +75,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     double heightDif = h2 - h1;
 
     public PIDShooterImpl(TalonSRX turretMotor, TalonFX shooterMotor, TalonSRX hoodMotor) {
-        super(10, TimeUnit.MILLISECONDS);
+        super(20, TimeUnit.MILLISECONDS);
         this.turretMotor = turretMotor;
         this.shooterMotor = shooterMotor;
         this.hoodMotor = hoodMotor;
@@ -181,8 +184,14 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 setPointShooterPID = 0;
                 setPointHood = 0;
                 setPointRotation = 0;
-                hoodReady = false;
-                turretReady = false;
+                shooterPid.reset();
+                break;
+            case RESET:
+                setPointShooterPID = 0;
+                setPointHood = Double.NEGATIVE_INFINITY;
+                setPointRotation = 0;
+                shooterMotor.setSelectedSensorPosition(0);
+                shooterPid.reset();
                 break;
             case TEST:
                 centerUsingLimelight = false;
@@ -194,18 +203,36 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 break;
         }
 
+        double hoodCurrent = hoodMotor.getStatorCurrent();
+        System.out.println("hood setpoint: " + setPointHood + ", current: " + hoodCurrent);
         if (setPointHood == Double.NEGATIVE_INFINITY) {
             hoodMotor.set(ControlMode.PercentOutput, 0);
             hoodReady = false;
+            stallCount = 0;
+        } else if (setPointHood == 0) {
+            hoodReady = false;
+            if (hoodCurrent > hoodStallCurrent) {
+                stallCount++;
+            }
+            if (stallCount > stallCountLimit) {
+                hoodMotor.set(ControlMode.PercentOutput, 0);
+                setShotPosition(ShotPosition.RESET);
+                stallCount = 0;
+            } else {
+                hoodMotor.set(ControlMode.PercentOutput, -0.4);
+            }
         } else if(turretHoodPosition >= setPointHood - hoodBuffer && turretHoodPosition <= setPointHood + hoodBuffer){
             hoodMotor.set(ControlMode.PercentOutput, 0);
             hoodReady = true;
+            stallCount = 0;
         }else if(turretHoodPosition <= setPointHood - hoodBuffer){
             hoodMotor.set(ControlMode.PercentOutput, hoodSpeed);
             hoodReady = false;
+            stallCount = 0;
         }else if (turretHoodPosition >= setPointHood + hoodBuffer){
             hoodMotor.set(ControlMode.PercentOutput, -hoodSpeed);
             hoodReady = false;
+            stallCount = 0;
         }
         
 
@@ -239,7 +266,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
 
         if(setPointShooterPID != 0){
             currentOutput = shooterPid.calculate(shooterEncoderReadingVelocity, setPointShooterPID);
-            currentOutput += 0.01; // hack "feed forward"
+            currentOutput += 0.02; // hack "feed forward"
             currentOutput = Utils.normalizePwm(currentOutput);
             // SmartDashboard.putNumber("Setpoint for the shooter is: ", setPointShooterPID);
             // SmartDashboard.putNumber("Current Output is: ", shooterEncoderReadingVelocity);

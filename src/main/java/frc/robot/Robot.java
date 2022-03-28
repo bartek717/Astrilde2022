@@ -25,6 +25,9 @@ import ca.team3161.lib.utils.controls.JoystickMode;
 import ca.team3161.lib.utils.controls.LogitechDualAction;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
 import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.cscore.UsbCamera;
+import edu.wpi.first.cscore.VideoMode;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.XboxController;
@@ -80,6 +83,7 @@ public class Robot extends TitanBot {
   public static final boolean DEBUG = false;
   double turretEncoderReadingPosition;
   double turretEncoderReadingVelocity;
+  private UsbCamera webcam;
 
   private Autonomous auto;
   AHRS ahrs;
@@ -148,6 +152,7 @@ public class Robot extends TitanBot {
     // INTAKE COMPONENTS
     WPI_TalonSRX intakeMotorController = new WPI_TalonSRX(RobotMap.INTAKE_TALON_PORT);
     Ultrasonic intakeSensor = new Ultrasonic(RobotMap.INTAKE_ULTRASONIC_PORTS[0], RobotMap.INTAKE_ULTRASONIC_PORTS[1]);
+    // intakeSensor.setEnabled(true);
     this.intake = new IntakeImpl(intakeMotorController, intakeSensor);
 
     // SHOOTER COMPONENTS
@@ -171,6 +176,8 @@ public class Robot extends TitanBot {
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
     Ultrasonic elevatorSensor = new Ultrasonic(RobotMap.ELEVATOR_ULTRASONIC_PORTS[0], RobotMap.ELEVATOR_ULTRASONIC_PORTS[1]);
     this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor);
+
+    // Ultrasonic.setAutomaticMode(true);
 
     this.ballSubsystem = new BallPathImpl(intake, elevator, shooter);
 
@@ -312,6 +319,7 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.INTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
     this.operatorPad.bind(ControllerBindings.OUTTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.OUT));
     this.operatorPad.bind(ControllerBindings.OUTTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
+    this.operatorPad.bind(ControllerBindings.OVERRIDE_ELEVATOR_GATE, this.elevator::setGateOverride);
 
     this.operatorPad.bind(ControllerBindings.SHOOT_FENDER, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTFENDER));
     this.operatorPad.bind(ControllerBindings.SHOOT_FENDER, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
