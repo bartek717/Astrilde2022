@@ -17,7 +17,7 @@ import frc.robot.subsystems.BallPath.Shooter.Shooter;
 
 public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
 
-    private static final double MOTOR_SPEED = 0.65;
+    private static final double MOTOR_SPEED = 0.85;
     private static final double INDEX_MOTOR_SPEED = 0.25; // 0.35
     private static final double PRIMED_DIST_THRESHOLD = 2;
     private static final int SAMPLE_COUNT = 1;
@@ -93,6 +93,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
             case PRIME:
                 // checking for ball
                 detectedColor = elevatorColorSensor.getColor();
+                System.out.println(detectedColor.red);
                 // System.out.println("Elevator: Priming");
                 if(detectedColor.red > 0.31){
                     detectedColorElevator = 1;
@@ -148,7 +149,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                     }
                 }
                 else{
-                    System.out.println("Elevator: Indexing, Last had a ball, not checking");
+                    // System.out.println("Elevator: Indexing, Last had a ball, not checking");
                     this.elevator.set(0);
                     break;
                 }

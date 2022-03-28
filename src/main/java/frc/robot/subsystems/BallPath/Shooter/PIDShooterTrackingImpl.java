@@ -100,8 +100,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     public double hood_kD = 0.05;
     public double hood_kIz = 0;
     public double hood_kFF = 0;
-    public double hood_kMaxOutput = 1;
-    public double hood_kMinOutput = -1;
+    public double hood_kMaxOutput = 0.3;
+    public double hood_kMinOutput = -0.3;
 
     // LIMELIGHT STUFF
     NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -173,9 +173,10 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
     public double getSetpointHood(double distance){
         double hoodDif, distDif, difFromUpper, percentToAdd, amountToAdd;
+        System.out.println("Distance" + distance);
         double returnAmount = 0;
-        double[] distances = {55.0, 153.0, 202.95, 244.77, 305.66};
-        int[] hoodValues = {10, 20, 30, 40, 50};
+        double[] distances = {55.0, 77, 100, 120, 145, 167, 202.95, 244.77, 305.66};
+        int[] hoodValues = {  30,   75,  80,  95, 115, 115,    125,    135,    145};
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
             if(distance < key){
@@ -184,18 +185,21 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 difFromUpper = distances[i] - distance;
                 percentToAdd = difFromUpper / distDif;
                 amountToAdd = percentToAdd * hoodDif;
-                returnAmount = amountToAdd + hoodValues[i-1];
+                returnAmount = hoodValues[i]-amountToAdd;
                 break;
             }
         }
+        // SmartDashboard.getNumber("Hood Set Rotations", returnAmount);
+        System.out.println(returnAmount);
+
         return returnAmount;
     }
 
     public double getSetpointWheel(Double distance){
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
-        double[] distances = {44.0, 113.4, 145.5, 170.8, 220.5};
-        int[] wheelValues = {5_500, 7_500, 9_500, 10_000, 11_000};
+        double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
+        int[] wheelValues = {5_500, 6_800,  7_500, 8_400, 8_700, 11_000};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -241,14 +245,16 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         totalAngleRadians = Math.toRadians(totalAngle);
         rs = Math.tan(totalAngleRadians);
         totalDistance = heightDif / rs;
+        SmartDashboard.putNumber("Distance", totalDistance);
         
 
         switch (this.requestedPosition) {
             case FENDER:
                 aim = false;
-                setPointShooterPID = 5_500;
-                setPointHood = 30;
+                setPointShooterPID = 6_000;
+                setPointHood = 39;
                 setPointRotation = 0;
+                shoot = true;
                 break;
             case GENERAL:
                 aim = true;
@@ -257,16 +263,23 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 shoot = true;
                 break;
             default:
-                setPointHood = 5;
+                setPointHood = 0;
                 shoot = false;
                 setPointShooterPID = 0;
                 aim = true;
                 break;
         }
 
-        // setting hood setpoint
-        hood_PIDController.setReference(setPointHood, CANSparkMax.ControlType.kPosition);
-        SmartDashboard.putNumber("Hood SetPoint", setPointHood);
+        if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
+            hoodMotor.set(0);
+        }
+        else{
+            // setting hood setpoint
+            hood_PIDController.setReference(setPointHood, CANSparkMax.ControlType.kPosition);
+            SmartDashboard.putNumber("Hood SetPoint", setPointHood);
+        }
+
+        
         if(aim){
             if(turretRotation > leftLimit && turretRotation < rightLimit){
                 if(canSeeTarget == 1.0 && !flipRight && !flipLeft){
@@ -292,7 +305,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                             flipLeft = true;
                         }
                     }
-                }else if (seen > 20){
+                }else if (seen > 40){
 
                     // System.out.println("Cannot see target");
                     // flip right
@@ -343,11 +356,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         // System.out.println("Set point rotation" + setPointRotation);
         // System.out.println("Current turret Rotation" + turretRotation);
         turret_PIDController.setReference(setPointRotation, CANSparkMax.ControlType.kPosition);
-        // SmartDashboard.putNumber("Turret SetPoint", setPointRotation);
+        SmartDashboard.putNumber("Turret SetPoint", setPointRotation);
 
 
         // shooter wheel
-        if(setPointShooterPID != 0){
+        if(setPointShooterPID != 0 && shoot){
             currentOutput = shooterPid.calculate(shooterEncoderReadingVelocity, setPointShooterPID);
             currentOutput += 0.01; // hack "feed forward"
             currentOutput = Utils.normalizePwm(currentOutput);
@@ -388,12 +401,13 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 500 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 500){
             shooterReady = true;
         }
-        if(turretRotation > setPointRotation - 1 && turretRotation < setPointRotation + 1){
+        if(turretRotation > setPointRotation - 2.5 && turretRotation < setPointRotation + 2.5){
             turretReady = true;
         }
-        if(hoodAngle > setPointHood - 1 && hoodAngle < setPointHood + 1){
+        if(hoodAngle > setPointHood - 2 && hoodAngle < setPointHood + 2){
             hoodReady = true;
         }
+        System.out.println(turretReady + " " + shooterReady + " " + hoodReady);
         return turretReady && shooterReady && hoodReady;
         
     }

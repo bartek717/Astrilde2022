@@ -148,6 +148,7 @@ public class Robot extends TitanBot {
     CANSparkMax turretMotor = new CANSparkMax(RobotMap.TURRET_PORT, MotorType.kBrushless);
     turretMotor.restoreFactoryDefaults();
     turretMotor.setInverted(true);
+    turretMotor.setSmartCurrentLimit(20);
     // TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
 
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
@@ -156,6 +157,7 @@ public class Robot extends TitanBot {
     // TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
     CANSparkMax hoodMotor = new CANSparkMax(RobotMap.HOOD_PORT, MotorType.kBrushless);
     hoodMotor.restoreFactoryDefaults();
+    hoodMotor.setSmartCurrentLimit(20);
     hoodMotor.setInverted(true);
     this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor);
 
