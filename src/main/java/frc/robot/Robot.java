@@ -232,12 +232,12 @@ public class Robot extends TitanBot {
     System.out.println("Auto selected: " + m_autoSelected);
 
     driverPad.start();
-    operatorPad.start();
+    // operatorPad.start();
     drive.start();
-    intake.start();
-    elevator.start();
-    shooter.start();
-    ballSubsystem.start();
+    // intake.start();
+    // elevator.start();
+    // shooter.start();
+    // ballSubsystem.start();
 
     auto = new Autonomous(this::waitFor, this.drive, this.ballSubsystem);
   }
@@ -249,60 +249,64 @@ public class Robot extends TitanBot {
   public void autonomousRoutine() throws InterruptedException {
     drive.resetEncoderTicks();
 
-    double[][] targets = {{0, 0}};
+    double[][] targets = {{10, 45}};
 
-    switch (m_autoSelected) {
-      case k5Ball:
-        targets = new double[][] {
-          {}, 
-          {}, 
-          {}, 
-          {}
-        };
-        break;
-      case k4Ball:
-        targets = new double[][] {
-          {}, 
-          {},
-          {}
-        };
-        break;
-      case k3Ball:
-        targets = new double[][] {
-          {}, 
-          {}, 
-        };
-        break;
-      case k2Ball:
-        targets = new double[][] {
-          {}
-        };
-        break;
-      default:
-        // Put default auto code here
-        break;
-    }
+    // switch (m_autoSelected) {
+    //   case k5Ball:
+    //     targets = new double[][] {
+    //       {}, 
+    //       {}, 
+    //       {}, 
+    //       {}
+    //     };
+    //     break;
+    //   case k4Ball:
+    //     targets = new double[][] {
+    //       {}, 
+    //       {},
+    //       {}
+    //     };
+    //     break;
+    //   case k3Ball:
+    //     targets = new double[][] {
+    //       {}, 
+    //       {}, 
+    //     };
+    //     break;
+    //   case k2Ball:
+    //     targets = new double[][] {
+    //       {}
+    //     };
+    //     break;
+    //   default:
+    //     // Put default auto code here
+    //     break;
+    // }
 
     int index = 0;
     boolean doneAuto = false;
 
     while (!doneAuto) {
-      if (index == targets.length) {
+      if (index == targets.length-1) {
         doneAuto = true;
       }
+      auto.resetPosition();
       auto.setDriveDistance(targets[index][0]);
+      System.out.println("Is about to turn");
       auto.turn(ahrs, targets[index][1]);
+      System.out.println("Has turned");
       Timer.delay(1);
       boolean doneDriving = false;
-      auto.prepareToShoot();
+      // auto.prepareToShoot();
       while (!doneDriving) {
         doneDriving = auto.drive();
       }
       auto.stopDriving();
-      auto.shoot();
+      // auto.shoot();
       Timer.delay(2);
-      auto.stop();
-      index++;
+      // auto.stop();
+      // auto.stopDriving();
+      index += 1;
     }
 
   }

@@ -52,16 +52,24 @@ public class Autonomous {
     public void turn(AHRS gyro, double degree) {
         gyro.reset();
         double error = degree - gyro.getAngle();
-        double kP = 0.1;
+        double kP = 0.005;
+        double tolerance = 2;
 
-        while (gyro.getAngle() < degree - 2 && gyro.getAngle() > degree + 2){
+        while (gyro.getAngle() < degree - tolerance || gyro.getAngle() > degree + tolerance){
             this.leftSide.set(kP * error);
             this.rightSide.set(-kP * error);
             error = degree - gyro.getAngle();
+            System.out.println(error);
         }
 
         this.leftSide.set(0);
         this.rightSide.set(0);
+    }
+
+    public void resetPosition(){
+        positionPIDController.reset();
+        this.leftSide.getEncoder().setPosition(0);
+        this.rightSide.getEncoder().setPosition(0);
     }
 
 
@@ -84,7 +92,7 @@ public class Autonomous {
         :targetPosition: distance to be driven in inches -> double
         */
 
-        double dampener = 0.3;
+        double dampener = 0.03;
 
         double position = (this.leftSide.getEncoder().getPosition() + this.rightSide.getEncoder().getPosition()) / 2;
 
