@@ -190,6 +190,12 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 setPointHood = 0;
                 setPointRotation = 0;
                 break;
+            case STARTAIM:
+                centerUsingLimelight = true;
+                break;
+            case STOPAIM:
+                centerUsingLimelight = false;
+                break;
             default:
                 break;
         }

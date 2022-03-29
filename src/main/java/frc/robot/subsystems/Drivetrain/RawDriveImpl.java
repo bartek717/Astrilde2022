@@ -2,14 +2,22 @@ package frc.robot.subsystems.Drivetrain;
 
 import java.util.concurrent.TimeUnit;
 
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive.WheelSpeeds;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.util.Units;
 
 public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
 
@@ -20,6 +28,10 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     private final RelativeEncoder leftEncoder;
     private final RelativeEncoder rightEncoder;
 
+    Pose2d pose;
+
+    AHRS gyro = new AHRS(SPI.Port.kMXP);
+
     public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide, RelativeEncoder leftEncoder, RelativeEncoder rightEncoder) {
         super(20, TimeUnit.MILLISECONDS);
         // basic drivetrain stuff
@@ -28,6 +40,10 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
         this.leftEncoder = leftEncoder;
         this.rightEncoder = rightEncoder; 
     }
+
+    DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Units.inchesToMeters(24.66));
+    DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(getHeading());
+
 
     @Override
     public void defineResources() {
@@ -38,9 +54,21 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
         require(rightEncoder);
     }
 
+    public double lSpeed(){
+      return leftSide.getEncoder().getVelocity()/5*2*Math.PI*Units.inchesToMeters(2)/60;
+    }
+
+    public double rSpeed(){
+      return rightSide.getEncoder().getVelocity()/5*2*Math.PI*Units.inchesToMeters(2)/60;
+    }
+
     @Override
     public void task() throws Exception {
-        // TODO Auto-generated method stub
+        pose = odometry.update(getHeading(), lSpeed(), rSpeed());
+    }
+
+    public Rotation2d getHeading(){
+      return Rotation2d.fromDegrees(-this.gyro.getAngle());
     }
 
     public static WheelSpeeds arcadeDriveIK(double xSpeed, double zRotation, boolean squareInputs) {
@@ -101,10 +129,6 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
       return Pair.of(this.leftEncoder.getPosition(), this.rightEncoder.getPosition());
     }
 
-    @Override
-    public double getHeading() {
-        return 0;
-    }
 
     @Override
     public void resetEncoderTicks() {

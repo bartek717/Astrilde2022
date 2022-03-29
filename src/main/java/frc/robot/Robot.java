@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -159,7 +160,8 @@ public class Robot extends TitanBot {
     hoodMotor.restoreFactoryDefaults();
     hoodMotor.setSmartCurrentLimit(20);
     hoodMotor.setInverted(true);
-    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor);
+    Spark blinkenController = new Spark(8);
+    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, blinkenController);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
@@ -277,6 +279,9 @@ public class Robot extends TitanBot {
 
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTGENERAL));
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
+
+    this.operatorPad.bind(ControllerBindings.AIM, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.STARTAIM));
+    this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.STOPAIM));
 
 
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);

@@ -125,7 +125,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     long logItter = 0;
  
 
-    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
+    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor, Spark BlinkenController) {
         super(10, TimeUnit.MILLISECONDS);
         // Turret Rotation
         this.turretMotor = turretMotor;
@@ -155,7 +155,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         hood_PIDController.setOutputRange(hood_kMinOutput, hood_kMaxOutput);
 
         // LEDs
-        this.blinkinController = new Spark(7);
+        this.blinkinController = BlinkenController;
        
     }
 
@@ -262,12 +262,31 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointShooterPID = getSetpointWheel(totalDistance);
                 shoot = true;
                 break;
+            case STARTAIM:
+                aim = true;
+                setPointShooterPID = 0;
+                setPointHood = 0;
+                shoot = false;
+                break;
+            case STOPAIM:
+                aim = false;
+                setPointShooterPID = 0;
+                setPointHood = 0;
+                shoot = false;
             default:
                 setPointHood = 0;
                 shoot = false;
                 setPointShooterPID = 0;
                 aim = true;
                 break;
+        }
+
+        if(canSeeTarget == 1.0){
+            System.out.println("Setting Controller");
+            blinkinController.set(0.61);
+        }else{
+            System.out.println("SEtting controller red");
+            blinkinController.set(0.77);
         }
 
         if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
