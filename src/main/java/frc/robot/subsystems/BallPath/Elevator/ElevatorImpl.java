@@ -29,7 +29,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     private volatile ElevatorAction action = ElevatorAction.NONE;
     private final ColorSensorV3 elevatorColorSensor;
     boolean ballPresent = false;
-    int detectedColorElevator = 0;
+    static int detectedColorElevator = 0;
     long count = 0;
 
     public ElevatorImpl(WPI_TalonSRX elevator, Ultrasonic sensor, Shooter shooter, ColorSensorV3 elevatorColorSensor) {
@@ -56,6 +56,10 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     public boolean ballPrimed() {
         System.out.println(ballPresent);
         return ballPresent;
+    }
+
+    public static boolean getBall(){
+        return detectedColorElevator == 1 || detectedColorElevator == 2;
     }
 
     @Override

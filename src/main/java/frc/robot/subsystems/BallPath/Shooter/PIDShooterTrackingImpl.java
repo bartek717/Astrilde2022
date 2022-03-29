@@ -56,9 +56,9 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private double turretRotation;
     private double turretHoodVelocity;
     private double turretEncoderReadingVelocity;
-    private Spark blinkinController;
     private RelativeEncoder hoodEncoder;
     private RelativeEncoder turretEncoder;
+    private RelativeEncoder hoodShooterMotorEncoder;
 
     private boolean turretReady = false;
     private boolean hoodReady = false;
@@ -111,7 +111,12 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     NetworkTableEntry ta = table.getEntry("ta");
     NetworkTableEntry tv = table.getEntry("tv");
     NetworkTableEntry targetSkew = table.getEntry("ts");
-    double x, y, a, canSeeTarget, totalAngle, rs, totalDistance, totalAngleRadians;
+    double x, y, a;
+    static double canSeeTarget;
+    double totalAngle;
+    double rs;
+    double totalDistance;
+    double totalAngleRadians;
 
     double a1 = 35; // angle of limelight
     double a2 = y;
@@ -125,8 +130,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     long logItter = 0;
  
 
-    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor, Spark BlinkenController) {
+    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
         super(10, TimeUnit.MILLISECONDS);
+
+        // this.hoodShooterMotor = hoodShooterMotor;
+        // this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
         // Turret Rotation
         this.turretMotor = turretMotor;
         this.turretEncoder = turretMotor.getEncoder();
@@ -155,7 +163,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         hood_PIDController.setOutputRange(hood_kMinOutput, hood_kMaxOutput);
 
         // LEDs
-        this.blinkinController = BlinkenController;
        
     }
 
@@ -214,6 +221,10 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             }
         }
         return returnAmount;
+    }
+
+    public static double canSeeTarget(){
+        return canSeeTarget;
     }
 
     
@@ -281,14 +292,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 break;
         }
 
-        if(canSeeTarget == 1.0){
-            System.out.println("Setting Controller");
-            blinkinController.set(0.61);
-        }else{
-            System.out.println("SEtting controller red");
-            blinkinController.set(0.77);
-        }
 
+        // hood position
         if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
             hoodMotor.set(0);
         }
@@ -298,7 +303,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             SmartDashboard.putNumber("Hood SetPoint", setPointHood);
         }
 
-        
+        // turret position
         if(aim){
             if(turretRotation > leftLimit && turretRotation < rightLimit){
                 if(canSeeTarget == 1.0 && !flipRight && !flipLeft){
@@ -387,6 +392,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             currentOutput = 0;
         }
         this.shooterMotor.set(ControlMode.PercentOutput, currentOutput);
+
+        // hood shooter wheel
 
 
     }    

@@ -161,14 +161,15 @@ public class Robot extends TitanBot {
     hoodMotor.setSmartCurrentLimit(20);
     hoodMotor.setInverted(true);
     Spark blinkenController = new Spark(8);
-    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, blinkenController);
+    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
     Ultrasonic elevatorSensor = new Ultrasonic(RobotMap.ELEVATOR_ULTRASONIC_PORTS[0], RobotMap.ELEVATOR_ULTRASONIC_PORTS[1]);
     this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor);
 
-    this.ballSubsystem = new BallPathImpl(intake, elevator, shooter);
+    this.ballSubsystem = new BallPathImpl(intake, elevator, shooter,blinkenController);
+    
 
     // Driverpad impl
     this.driverPad = new LogitechDualAction(RobotMap.DRIVER_PAD_PORT);

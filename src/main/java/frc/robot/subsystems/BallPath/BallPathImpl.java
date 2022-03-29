@@ -2,12 +2,17 @@ package frc.robot.subsystems.BallPath;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.text.DefaultStyledDocument.ElementSpec;
+
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import frc.robot.subsystems.BallPath.Elevator.Elevator;
+import frc.robot.subsystems.BallPath.Elevator.ElevatorImpl;
 import frc.robot.subsystems.BallPath.Elevator.Elevator.ElevatorAction;
 import frc.robot.subsystems.BallPath.Intake.Intake;
 import frc.robot.subsystems.BallPath.Intake.Intake.IntakeAction;
+import frc.robot.subsystems.BallPath.Shooter.PIDShooterTrackingImpl;
 import frc.robot.subsystems.BallPath.Shooter.Shooter;
 import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 
@@ -16,14 +21,17 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private final Intake intake;
     private final Elevator elevator;
     private final Shooter shooter;
+    private Spark blinkenController;
+    boolean checkBall = false;
 
     private volatile BallAction action = BallAction.NONE;
 
-    public BallPathImpl(Intake intake, Elevator elevator, Shooter shooter) {
+    public BallPathImpl(Intake intake, Elevator elevator, Shooter shooter, Spark blinkenController) {
         super(20, TimeUnit.MILLISECONDS);
         this.intake = intake;
         this.elevator = elevator;
         this.shooter = shooter;
+        this.blinkenController = blinkenController;
     }
 
     @Override
@@ -40,6 +48,8 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void task() {
+
+
         switch (action) {
             case SHOOTGENERAL:
                 this.shooter.setShotPosition(ShotPosition.GENERAL);
@@ -70,10 +80,12 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 this.intake.setAction(IntakeAction.STOP);
                 this.elevator.setAction(ElevatorAction.STOP);
                 this.shooter.setShotPosition(ShotPosition.NONE);
+                checkBall = false;
                 break;
             case INDEX:
                 this.elevator.setAction(ElevatorAction.INDEX);
                 this.intake.setAction(IntakeAction.IN);
+                checkBall = true;
                 break;
             case OUT:
                 this.elevator.setAction(ElevatorAction.OUT);
@@ -88,6 +100,20 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 elevator.setAction(ElevatorAction.NONE);
                 shooter.setShotPosition(ShotPosition.NONE);
                 break;
+        }
+
+        if(checkBall){
+            if(ElevatorImpl.getBall()){
+                blinkenController.set(.83);
+            }else{
+                blinkenController.set(.61);
+            }
+        }else{
+            if(PIDShooterTrackingImpl.canSeeTarget() == 1.0){
+                blinkenController.set(0.77);
+            }else{
+                blinkenController.set(0.61);
+            }
         }
     }
 
