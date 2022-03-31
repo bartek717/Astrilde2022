@@ -249,7 +249,7 @@ public class Robot extends TitanBot {
   public void autonomousRoutine() throws InterruptedException {
     drive.resetEncoderTicks();
 
-    double[][] targets = {{10, 45}};
+    double[][] targets = {{-10, 45}};
 
     // switch (m_autoSelected) {
     //   case k5Ball:
@@ -292,9 +292,10 @@ public class Robot extends TitanBot {
       }
       auto.resetPosition();
       auto.setDriveDistance(targets[index][0]);
-      System.out.println("Is about to turn");
+      // System.out.println("Is about to turn");
       auto.turn(ahrs, targets[index][1]);
-      System.out.println("Has turned");
+      // System.out.println("Has turned");
+      drive.resetEncoderTicks();
       Timer.delay(1);
       boolean doneDriving = false;
       // auto.prepareToShoot();
