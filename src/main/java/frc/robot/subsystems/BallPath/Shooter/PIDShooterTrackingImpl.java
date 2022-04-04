@@ -41,8 +41,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private double ki = PIDShooterImpl.ki; // 0.00002
     private double kd = PIDShooterImpl.kd; // 0.00002
 
-    private double leftLimit = -120.0;
-    private double rightLimit = 120.0;
+    private double leftLimit = -90.0;
+    private double rightLimit = 90.0;
     private double degreesToTicks = 5555; //  find actual values
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
@@ -329,7 +329,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                             flipLeft = true;
                         }
                     }
-                }else if (seen > 40){
+                }else if (seen > 20){
 
                     // System.out.println("Cannot see target");
                     // flip right
@@ -361,8 +361,14 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                         }
                     }
                     else{
-                        setPointRotation=leftLimit-1;
-                        flipLeft=true;
+                        if(turretRotation > 0){
+                            setPointRotation=leftLimit+1;
+                            flipLeft=true;
+                        }else{
+                            setPointRotation=rightLimit-1;
+                            flipRight = true;
+                        }
+                        
                     }
                 }
                 else{
