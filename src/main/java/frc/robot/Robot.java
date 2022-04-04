@@ -23,6 +23,7 @@ import ca.team3161.lib.utils.controls.InvertedJoystickMode;
 import ca.team3161.lib.utils.controls.JoystickMode;
 import ca.team3161.lib.utils.controls.LogitechDualAction;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
@@ -78,9 +79,10 @@ public class Robot extends TitanBot {
   public static final boolean DEBUG = false;
   double turretEncoderReadingPosition;
   double turretEncoderReadingVelocity;
-
+  private boolean set = false;
   private Autonomous auto;
   AHRS ahrs;
+  public static boolean toggle;
 
 
   @Override
@@ -123,6 +125,9 @@ public class Robot extends TitanBot {
     rightControllerFollower.setIdleMode(CANSparkMax.IdleMode.kBrake);
 
     leftControllerPrimary.setInverted(true);
+
+    DigitalInput elevatorBeam = new DigitalInput(0);
+    DigitalInput intakeBeam = new DigitalInput(2);
     
     //SpeedControllerGroup leftSide = new SpeedControllerGroup(leftMotorController1, leftMotorController2);
     //SpeedControllerGroup rightSide = new SpeedControllerGroup(rightMotorController1, rightMotorController2);
@@ -166,7 +171,7 @@ public class Robot extends TitanBot {
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
     Ultrasonic elevatorSensor = new Ultrasonic(RobotMap.ELEVATOR_ULTRASONIC_PORTS[0], RobotMap.ELEVATOR_ULTRASONIC_PORTS[1]);
-    this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor);
+    this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor, elevatorBeam);
 
     this.ballSubsystem = new BallPathImpl(intake, elevator, shooter,blinkenController);
     
@@ -262,6 +267,13 @@ public class Robot extends TitanBot {
     }
   }
 
+  public boolean getToggle() {
+    return toggle;
+  }
+
+  public void setToggle(boolean t) {
+      this.toggle = t;
+  }
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopSetup() {
@@ -281,8 +293,9 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTGENERAL));
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
 
-    this.operatorPad.bind(ControllerBindings.AIM, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.STARTAIM));
-    this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.STOPAIM));
+    this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> 
+    setToggle(!getToggle())
+    );
 
 
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
@@ -305,6 +318,16 @@ public class Robot extends TitanBot {
       turn = this.driverPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS);
 
       this.drive.drive(forward, turn); 
+
+      if(toggle){
+        this.ballSubsystem.setAction(BallAction.NO_SHOOT);
+        set = false;
+      }else{
+        if(!set){
+          this.ballSubsystem.setAction(BallAction.YES_SHOOT);
+          set = true;
+        }
+      }
       }
 
   static DpadDirection angleToDpadDirection(int angle) {

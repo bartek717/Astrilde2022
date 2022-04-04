@@ -23,6 +23,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private final Shooter shooter;
     private Spark blinkenController;
     boolean checkBall = false;
+    boolean noShoot = false;
 
     private volatile BallAction action = BallAction.NONE;
 
@@ -51,6 +52,14 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
 
         switch (action) {
+            case YES_SHOOT:
+                this.shooter.setShotPosition(ShotPosition.STARTAIM);
+                noShoot = false;
+                break;
+            case NO_SHOOT:
+                this.shooter.setShotPosition(ShotPosition.STOPAIM);
+                noShoot = true;
+                break;
             case SHOOTGENERAL:
                 this.shooter.setShotPosition(ShotPosition.GENERAL);
                 if(shooter.readyToShoot()){
@@ -102,7 +111,9 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 break;
         }
 
-        if(checkBall){
+        if(noShoot){
+            blinkenController.set(-0.89);
+        }else if(checkBall){
             if(ElevatorImpl.getBall()){
                 blinkenController.set(.83);
             }else{

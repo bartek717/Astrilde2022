@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
 
 
@@ -74,6 +75,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private final double hoodSpeed = 0.5;
     private final double leftLimitLimelight = -0.3;
     private final double rightLimitLimelight = 0.3;
+
+    private boolean shootFender = false;
 
     private final PIDController shooterPid;
     boolean centerUsingLimelight = false;
@@ -129,6 +132,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     int seen = 0;
     long logItter = 0;
  
+    
 
     public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
         super(10, TimeUnit.MILLISECONDS);
@@ -234,6 +238,9 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
     @Override
     public void task(){
+
+        
+
         // getting and posting encoder reading positions for turret, hood and shooter
         shooterEncoderReadingPosition = shooterMotor.getSelectedSensorPosition();
         shooterEncoderReadingVelocity = shooterMotor.getSelectedSensorVelocity();
@@ -261,30 +268,36 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
         switch (this.requestedPosition) {
             case FENDER:
+                shootFender = true;
                 aim = false;
-                setPointShooterPID = 6_000;
+                setPointShooterPID = 4_000;
                 setPointHood = 39;
                 setPointRotation = 0;
                 shoot = true;
+                System.out.println("FENDER");
                 break;
             case GENERAL:
+                shootFender = false;
                 aim = true;
                 setPointHood = getSetpointHood(totalDistance);
                 setPointShooterPID = getSetpointWheel(totalDistance);
                 shoot = true;
-                break;
-            case STARTAIM:
-                aim = true;
-                setPointShooterPID = 0;
-                setPointHood = 0;
-                shoot = false;
+                System.out.println("GENERAL");
                 break;
             case STOPAIM:
+                shootFender = false;
                 aim = false;
                 setPointShooterPID = 0;
                 setPointHood = 0;
+                setPointRotation = 0;
                 shoot = false;
+                System.out.println("STOPAIM");
+                break;
+            case STARTAIM:
+                System.out.println("STARTAIM");
             default:
+                System.out.println("DEFAULT");
+                shootFender = false;
                 setPointHood = 0;
                 shoot = false;
                 setPointShooterPID = 0;
