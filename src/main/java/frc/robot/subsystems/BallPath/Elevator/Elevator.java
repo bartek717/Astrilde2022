@@ -6,6 +6,8 @@ import ca.team3161.lib.robot.subsystem.Subsystem;
 public interface Elevator extends Subsystem, LifecycleListener {
     void setAction(ElevatorAction action);
     boolean ballPrimed();
+    boolean getBall();
+    // static boolean getShot();
 
     enum ElevatorAction {
         STOP,

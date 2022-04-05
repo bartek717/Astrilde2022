@@ -95,8 +95,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     public double turret_kD = 0.05;
     public double turret_kIz = 0;
     public double turret_kFF = 0;
-    public double turret_kMaxOutput = 0.6;
-    public double turret_kMinOutput = -0.6;
+    public double turret_kMaxOutput = 0.7;
+    public double turret_kMinOutput = -0.7;
     // public double turret_kMaxOutputsearch = 0.3;
     // public double turret_kMinOutputsearch = 0.3;
 
@@ -298,8 +298,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 4_000;
-                hoodShooterMotorSpeed = 0.5;
+                setPointShooterPID = 3_000;
+                hoodShooterMotorSpeed = 0.2;
                 setPointHood = 39;
                 setPointRotation = 0;
                 shoot = true;

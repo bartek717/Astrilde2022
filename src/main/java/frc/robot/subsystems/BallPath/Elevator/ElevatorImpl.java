@@ -26,7 +26,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     private final WPI_TalonSRX elevator;
     private final Ultrasonic sensor;
     private final Shooter shooter;
-    private final DigitalInput beam;
+    private static DigitalInput beam;
 
     private volatile ElevatorAction action = ElevatorAction.NONE;
     private final ColorSensorV3 elevatorColorSensor;
@@ -34,6 +34,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     static int detectedColorElevator = 0;
     long count = 0;
     private boolean detectedBall = false;
+    private boolean shot = false;
 
     public ElevatorImpl(WPI_TalonSRX elevator, Ultrasonic sensor, Shooter shooter, ColorSensorV3 elevatorColorSensor, DigitalInput beam) {
         super(20, TimeUnit.MILLISECONDS);
@@ -41,7 +42,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
         this.elevator = elevator;
         this.sensor = sensor;
         this.shooter = shooter;
-        this.beam = beam;
+        ElevatorImpl.beam = beam;
     }
 
     @Override
@@ -62,9 +63,17 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
         return ballPresent;
     }
 
-    public static boolean getBall(){
-        return detectedColorElevator == 1 || detectedColorElevator == 2;
+    public boolean getBall(){
+        
+        return beam.get();
     }
+
+    
+    public boolean getShot(){
+        return this.shot;
+    }
+
+    
 
     @Override
     public void task() throws Exception {
@@ -128,6 +137,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                 }else{
                     ballPresent = false;
                     this.elevator.set(0);
+                    shot = true;
                 }
 
                 break;
@@ -146,7 +156,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                 ballPresent = false;
                 break;
             case INDEX:
-                
+                shot = false;
                 count ++;
                 if (!ballPresent || (count % 10) == 0){
                     detectedBall = beam.get();
