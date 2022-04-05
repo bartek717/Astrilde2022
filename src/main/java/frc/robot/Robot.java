@@ -166,7 +166,13 @@ public class Robot extends TitanBot {
     hoodMotor.setSmartCurrentLimit(20);
     hoodMotor.setInverted(true);
     Spark blinkenController = new Spark(8);
-    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor);
+
+    CANSparkMax hoodShooterMotor = new CANSparkMax(RobotMap.HOOD_SHOOTER_PORT, MotorType.kBrushless);
+    hoodMotor.restoreFactoryDefaults();
+    hoodMotor.setSmartCurrentLimit(20);
+    hoodMotor.setInverted(true);
+
+    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);

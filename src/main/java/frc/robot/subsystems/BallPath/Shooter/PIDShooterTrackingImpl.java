@@ -36,6 +36,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private final TalonFX shooterMotor;
     // private final TalonSRX hoodMotor;
     private final CANSparkMax hoodMotor;
+    private final CANSparkMax hoodShooterMotor;
 
 
     private double kp = PIDShooterImpl.kp; // 0.00175
@@ -84,6 +85,9 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     double currentPosition, error;
     double difference;
     
+    // turret hood wheel PID
+    private final SparkMaxPIDController hoodShooterMotor_PidController;
+
     // ### TURRET ROTATION PID ###
     private SparkMaxPIDController turret_PIDController;
     public double turret_kP = 0.14; 
@@ -131,14 +135,16 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     double heightDif = h2 - h1;
     int seen = 0;
     long logItter = 0;
+    private double hoodShooterMotorSpeed = 0;
  
     
 
-    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
+    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor, CANSparkMax hoodShooterMotor) {
         super(10, TimeUnit.MILLISECONDS);
 
-        // this.hoodShooterMotor = hoodShooterMotor;
-        // this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
+        this.hoodShooterMotor = hoodShooterMotor;
+        this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
+        this.hoodShooterMotor_PidController = hoodShooterMotor.getPIDController();
         // Turret Rotation
         this.turretMotor = turretMotor;
         this.turretEncoder = turretMotor.getEncoder();
@@ -166,7 +172,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         hood_PIDController.setFF(hood_kFF);
         hood_PIDController.setOutputRange(hood_kMinOutput, hood_kMaxOutput);
 
-        // LEDs
+      
        
     }
 
@@ -175,6 +181,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         require(turretMotor);
         require(shooterMotor);
         require(hoodMotor);
+        require(hoodShooterMotor);
     }
 
     @Override
@@ -211,6 +218,27 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
         int[] wheelValues = {5_500, 6_800,  7_500, 8_400, 8_700, 11_000};
+    
+        for (int i = 1; i < distances.length; i++) {
+            double key = distances[i];
+            if(distance < key){
+                distDif = distances[i] - distances[i-1];
+                wheelDif = wheelValues[i] - wheelValues[i-1];
+                difFromUpper = distances[i] - distance;
+                percentToAdd = difFromUpper / distDif;
+                amountToAdd = percentToAdd * wheelDif;
+                returnAmount = wheelValues[i] - amountToAdd;
+                break;
+            }
+        }
+        return returnAmount;
+    }
+
+    public double getSetpointHoodShooter(Double distance){
+        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
+        double returnAmount = 0;
+        double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
+        double[] wheelValues = {0.4, .5,  .6, .7, .8, .9};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -271,6 +299,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 shootFender = true;
                 aim = false;
                 setPointShooterPID = 4_000;
+                hoodShooterMotorSpeed = 0.5;
                 setPointHood = 39;
                 setPointRotation = 0;
                 shoot = true;
@@ -291,6 +320,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = false;
+                hoodShooterMotorSpeed = 0;
                 System.out.println("STOPAIM");
                 break;
             case STARTAIM:
@@ -302,9 +332,12 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 shoot = false;
                 setPointShooterPID = 0;
                 aim = true;
+                hoodShooterMotorSpeed = 0;
                 break;
         }
 
+        // hood Shooter motor
+        this.hoodShooterMotor.set(hoodShooterMotorSpeed);
 
         // hood position
         if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
