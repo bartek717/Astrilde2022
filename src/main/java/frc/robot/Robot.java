@@ -296,20 +296,20 @@ public class Robot extends TitanBot {
 
       if (!turned) { // If turn has not been made
         auto.setDriveDistance(targets[index][0]);
-        System.out.println("Is about to turn");
+        // System.out.println("Is about to turn");
         auto.turn(ahrs, targets[index][1]);
-        System.out.println("Has turned");
+        // System.out.println("Has turned");
         auto.resetPosition();
+        Timer.delay(1);
+        auto.prepareToShoot();
         turned = true;
       }
-      Timer.delay(1);
       if (!auto.atPosition()){ // if bot hasn't driven to target distance yet
-        auto.prepareToShoot();
         auto.drive();
       } else {
-        index += 1;
         auto.resetPosition();
         turned = false;
+        index += 1;
       }
       auto.shoot();
     }
