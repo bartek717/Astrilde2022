@@ -73,7 +73,7 @@ public class Autonomous {
                 System.out.println(error);
             }
         }
-        
+
         this.leftSide.set(0);
         this.rightSide.set(0);
     }
@@ -99,7 +99,7 @@ public class Autonomous {
         // positionPIDController.setSetpoint(this.targetDistance);
     }
 
-    public boolean drive(){
+    public void drive(){
         /*
         :targetPosition: distance to be driven in inches -> double
         */
@@ -112,11 +112,10 @@ public class Autonomous {
 
         ((RawDriveImpl) this.drivetrain).setPosition(this.targetDistance);
 
-        return atPosition();
         // return positionPIDController.atSetpoint();
     }
 
-    private boolean atPosition(){
+    public boolean atPosition(){
         boolean arrived = false;
         double revTolerance = 0.5;
         double leftSidePos = this.leftSide.getEncoder().getPosition();

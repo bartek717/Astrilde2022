@@ -247,7 +247,6 @@ public class Robot extends TitanBot {
    * */
   @Override
   public void autonomousRoutine() throws InterruptedException {
-    drive.resetEncoderTicks();
 
     double[][] targets = {{0, 0}};
 
@@ -287,30 +286,32 @@ public class Robot extends TitanBot {
 
     int index = 0;
     boolean doneAuto = false;
+    boolean turned = false;
 
+    auto.resetPosition();
     while (!doneAuto) {
-      if (index == targets.length-1) {
+      if (index == targets.length-1) { // If auto is complete
         doneAuto = true;
       }
-      auto.resetPosition();
-      auto.setDriveDistance(targets[index][0]);
-      System.out.println("Is about to turn");
-      auto.turn(ahrs, targets[index][1]);
-      System.out.println("Has turned");
-      auto.resetPosition();
-      Timer.delay(1);
-      boolean doneDriving = false;
-      auto.prepareToShoot();
-      while (!doneDriving) {
-        System.out.println("Is driving");
-        doneDriving = auto.drive();
+
+      if (!turned) { // If turn has not been made
+        auto.setDriveDistance(targets[index][0]);
+        System.out.println("Is about to turn");
+        auto.turn(ahrs, targets[index][1]);
+        System.out.println("Has turned");
+        auto.resetPosition();
+        turned = true;
       }
-      // auto.stopDriving();
+      Timer.delay(1);
+      if (!auto.atPosition()){ // if bot hasn't driven to target distance yet
+        auto.prepareToShoot();
+        auto.drive();
+      } else {
+        index += 1;
+        auto.resetPosition();
+        turned = false;
+      }
       auto.shoot();
-      Timer.delay(5);
-      auto.stop();
-      // auto.stopDriving();
-      index += 1;
     }
 
   }
