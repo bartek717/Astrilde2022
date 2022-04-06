@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -23,6 +24,7 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
     private volatile IntakeAction action = IntakeAction.NONE;
     private boolean lastPresent = false;
     private final Queue<Double> sensorSamples;
+    
 
     public IntakeImpl(WPI_TalonSRX intake, Ultrasonic intakeSensor) {
         super(20, TimeUnit.MILLISECONDS);
@@ -107,7 +109,7 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
         }
 
         lastPresent = ballPresent;
-    }
+        }
 
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {

@@ -32,5 +32,6 @@ public final class RobotMap {
     public static final int SHOOTER_PORT = 5;
     public static final int TURRET_PORT = 5;
     public static final int HOOD_PORT = 6;
+    public static final int HOOD_SHOOTER_PORT = 7;
 
 }

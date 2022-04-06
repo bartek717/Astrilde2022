@@ -36,6 +36,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private final TalonFX shooterMotor;
     // private final TalonSRX hoodMotor;
     private final CANSparkMax hoodMotor;
+    private final CANSparkMax hoodShooterMotor;
 
 
     private double kp = PIDShooterImpl.kp; // 0.00175
@@ -88,7 +89,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private SparkMaxPIDController turret_PIDController;
     public double turret_kP = 0.14; 
     public double turret_kI = 0.000002;
-    public double turret_kD = 0.05;
+    public double turret_kD = 0.07;
     public double turret_kIz = 0;
     public double turret_kFF = 0;
     public double turret_kMaxOutput = 0.6;
@@ -131,14 +132,15 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     double heightDif = h2 - h1;
     int seen = 0;
     long logItter = 0;
+    private double hoodShooterMotorSpeed = 0;
  
     
 
-    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor) {
+    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor, CANSparkMax hoodShooterMotor) {
         super(10, TimeUnit.MILLISECONDS);
 
-        // this.hoodShooterMotor = hoodShooterMotor;
-        // this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
+        this.hoodShooterMotor = hoodShooterMotor;
+        this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
         // Turret Rotation
         this.turretMotor = turretMotor;
         this.turretEncoder = turretMotor.getEncoder();
@@ -206,6 +208,28 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         return returnAmount;
     }
 
+    
+    public double getSetpointHoodShooter(Double distance){
+        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
+        double returnAmount = 0;
+        double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
+        double[] wheelValues = {0.4, .5,  .6, .7, .8, .9};
+    
+        for (int i = 1; i < distances.length; i++) {
+            double key = distances[i];
+            if(distance < key){
+                distDif = distances[i] - distances[i-1];
+                wheelDif = wheelValues[i] - wheelValues[i-1];
+                difFromUpper = distances[i] - distance;
+                percentToAdd = difFromUpper / distDif;
+                amountToAdd = percentToAdd * wheelDif;
+                returnAmount = wheelValues[i] - amountToAdd;
+                break;
+            }
+        }
+        return returnAmount;
+    }
+
     public double getSetpointWheel(Double distance){
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
@@ -270,10 +294,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 4_000;
-                setPointHood = 39;
+                setPointShooterPID = 5_750;
+                setPointHood = 5;
                 setPointRotation = 0;
                 shoot = true;
+                hoodShooterMotorSpeed = 0.15;
                 System.out.println("FENDER");
                 break;
             case GENERAL:
@@ -282,6 +307,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointHood = getSetpointHood(totalDistance);
                 setPointShooterPID = getSetpointWheel(totalDistance);
                 shoot = true;
+                hoodShooterMotorSpeed = getSetpointHoodShooter(totalDistance);
                 System.out.println("GENERAL");
                 break;
             case STOPAIM:
@@ -291,6 +317,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = false;
+                hoodShooterMotorSpeed = 0;
                 System.out.println("STOPAIM");
                 break;
             case STARTAIM:
@@ -301,10 +328,12 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointHood = 0;
                 shoot = false;
                 setPointShooterPID = 0;
+                hoodShooterMotorSpeed = 0;
                 aim = true;
                 break;
         }
 
+        this.hoodShooterMotor.set(hoodShooterMotorSpeed);
 
         // hood position
         if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
@@ -443,7 +472,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         boolean shooterReady = false;
         boolean turretReady = false;
         boolean hoodReady = false;
-        if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 500 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 500){
+        boolean hoodShooterReady = false;
+        if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 400 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 400){
             shooterReady = true;
         }
         if(turretRotation > setPointRotation - 2.5 && turretRotation < setPointRotation + 2.5){
@@ -452,8 +482,15 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         if(hoodAngle > setPointHood - 2 && hoodAngle < setPointHood + 2){
             hoodReady = true;
         }
-        System.out.println(turretReady + " " + shooterReady + " " + hoodReady);
-        return turretReady && shooterReady && hoodReady;
+        if(hoodShooterMotorEncoder.getVelocity() > hoodShooterMotorSpeed * 10000){
+            hoodShooterReady = true;
+
+        }
+        System.out.println(hoodShooterMotorEncoder.getVelocity());
+        System.out.println(hoodAngle);
+        System.out.println(setPointHood);
+        System.out.println(turretReady + " " + shooterReady + " " + hoodReady + " " + hoodShooterReady);
+        return turretReady && shooterReady && hoodReady && hoodShooterReady;
         
     }
 
