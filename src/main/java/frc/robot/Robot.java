@@ -248,35 +248,37 @@ public class Robot extends TitanBot {
   @Override
   public void autonomousRoutine() throws InterruptedException {
 
-    double[][] targets = {{0, 0}};
+    double[][] targets = {{0, 0, 0}};
 
     switch (m_autoSelected) {
       case k5Ball:
         targets = new double[][] {
-          {}, 
-          {}, 
-          {}, 
-          {}
+          {35, 0, 0, 1}, 
+          {-10, 0, 0, 1}, 
+          {60, 105, 1, 0.75}, 
+          {150, -30, 0, 1}, 
+          {-50, 0, 1, 1}
         };
         break;
       case k4Ball:
         targets = new double[][] {
-          {}, 
-          {},
-          {}
+          {35, 0, 0, 1}, 
+          {-10, 0, 0, 1}, 
+          {60, 105, 1, 0.75}, 
+          {150, -30, 0, 1}, 
+          {-50, 0, 1, 1}
         };
         break;
       case k3Ball:
         targets = new double[][] {
-          {0, 0},
-          {35, 0}, 
-          {-10, 0}, 
-          {60, 105}
+          {35, 0, 0, 1}, 
+          {-10, 0, 0, 1}, 
+          {60, 105, 1, 0.75}, 
         };
         break;
       case k2Ball:
         targets = new double[][] {
-          {}
+          {35, 0, 1, 1}, 
         };
         break;
       default:
@@ -287,13 +289,14 @@ public class Robot extends TitanBot {
     int index = 0;
     boolean doneAuto = false;
     boolean turned = false;
+    boolean shot = false;
 
     auto.resetPosition();
     while (!doneAuto) {
       if (index == targets.length-1) { // If auto is complete
         doneAuto = true;
       }
-
+      auto.prepareToShoot();
       if (!turned) { // If turn has not been made
         auto.setDriveDistance(targets[index][0]);
         // System.out.println("Is about to turn");
@@ -301,16 +304,17 @@ public class Robot extends TitanBot {
         // System.out.println("Has turned");
         auto.resetPosition();
         Timer.delay(1);
-        auto.prepareToShoot();
         turned = true;
+        shot = false;
       }
 
-      if (!auto.atPosition()){ // if bot hasn't driven to target distance yet
+      if (!auto.atPosition(1)){ // if bot hasn't driven to target distance yet
         auto.drive();
+        if (targets[index][2] == 1 && !shot){
+          auto.shoot(targets[index][3]);
+        }
       } else {
         Timer.delay(1);
-        auto.stopIntake();
-        auto.shoot();
         auto.resetPosition();
         turned = false;
         index += 1;

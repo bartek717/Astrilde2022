@@ -117,7 +117,7 @@ public class Autonomous {
         // return positionPIDController.atSetpoint();
     }
 
-    public boolean atPosition(){
+    public boolean atPosition(double multiplier){
         boolean arrived = false;
         double revTolerance = 0.5;
         double leftSidePos = this.leftSide.getEncoder().getPosition();
@@ -125,8 +125,8 @@ public class Autonomous {
 
         // System.out.println("LeftSidePos: " + leftSidePos + ", RightSidePos: " + rightSidePos + " Target Pos: " + this.targetDistance);
         
-        boolean leftSideArrvied = leftSidePos > this.targetDistance - revTolerance && leftSidePos < this.targetDistance + revTolerance;
-        boolean rightSideArrvied = rightSidePos > this.targetDistance - revTolerance && rightSidePos < this.targetDistance + revTolerance;
+        boolean leftSideArrvied = leftSidePos > (this.targetDistance * multiplier) - revTolerance && leftSidePos < this.targetDistance + revTolerance;
+        boolean rightSideArrvied = rightSidePos > (this.targetDistance * multiplier) - revTolerance && rightSidePos < this.targetDistance + revTolerance;
         
         if (leftSideArrvied && rightSideArrvied) {
             arrived = true;
@@ -144,8 +144,10 @@ public class Autonomous {
         ballPath.getIntake().setAction(Intake.IntakeAction.IN);
     }
 
-    void shoot() throws InterruptedException {
-        ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
+    void shoot(double multiplier) throws InterruptedException {
+        if (this.atPosition(0.75)) {
+            ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
+        }
     }
 
     void stopIntake(){
