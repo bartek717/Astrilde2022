@@ -139,15 +139,15 @@ public class Robot extends TitanBot {
     // rightSide.setInverted(true);
     // Encoder leftEncoder = new Encoder(RobotMap.LEFT_ENCODER_PORTS[0], RobotMap.LEFT_ENCODER_PORTS[1], false, Encoder.EncodingType.k2X);
     // Encoder rightEncoder = new Encoder(RobotMap.RIGHT_ENCODER_PORTS[0], RobotMap.RIGHT_ENCODER_PORTS[1], false, Encoder.EncodingType.k2X);
-    RelativeEncoder leftEncoderPrimary = leftControllerPrimary.getEncoder();
-    RelativeEncoder rightEncoderPrimary = rightControllerPrimary.getEncoder();
+    // RelativeEncoder leftEncoderPrimary = leftControllerPrimary.getEncoder();
+    // RelativeEncoder rightEncoderPrimary = rightControllerPrimary.getEncoder();
 
     final I2C.Port i2cPort = I2C.Port.kMXP;
     final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort);
 
     
 
-    this.drive = new RawDriveImpl(leftControllerPrimary, rightControllerPrimary, leftEncoderPrimary, rightEncoderPrimary);
+    this.drive = new RawDriveImpl(leftControllerPrimary, rightControllerPrimary);
 
     // INTAKE COMPONENTS
     WPI_TalonSRX intakeMotorController = new WPI_TalonSRX(RobotMap.INTAKE_TALON_PORT);
@@ -304,14 +304,17 @@ public class Robot extends TitanBot {
         auto.prepareToShoot();
         turned = true;
       }
+
       if (!auto.atPosition()){ // if bot hasn't driven to target distance yet
         auto.drive();
       } else {
+        Timer.delay(1);
+        auto.stopIntake();
+        auto.shoot();
         auto.resetPosition();
         turned = false;
         index += 1;
       }
-      auto.shoot();
     }
 
   }

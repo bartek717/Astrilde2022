@@ -32,13 +32,13 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     private final double arI = 0;
     private final double arD = 0.08;
 
-    public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide, RelativeEncoder leftEncoder, RelativeEncoder rightEncoder) {
+    public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide) {
         super(20, TimeUnit.MILLISECONDS);
         // basic drivetrain stuff
         this.leftSide = leftSide;
         this.rightSide = rightSide;
-        this.leftEncoder = leftEncoder;
-        this.rightEncoder = rightEncoder; 
+        this.leftEncoder = leftSide.getEncoder();
+        this.rightEncoder = rightSide.getEncoder(); 
 
         // Left PID controller setup
         this.leftPIDController = this.leftSide.getPIDController();

@@ -19,6 +19,7 @@ import com.revrobotics.SparkMaxPIDController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.PIDBase.Tolerance;
 import frc.robot.subsystems.BallPath.Intake.Intake;
+import frc.robot.subsystems.BallPath.Intake.Intake.IntakeAction;
 
 public class Autonomous {
 
@@ -80,8 +81,9 @@ public class Autonomous {
 
     public void resetPosition(){
         // positionPIDController.reset();
-        this.leftSide.getEncoder().setPosition(0);
-        this.rightSide.getEncoder().setPosition(0);
+        // this.leftSide.getEncoder().setPosition(0);
+        // this.rightSide.getEncoder().setPosition(0);
+        this.drivetrain.resetEncoderTicks();
     }
 
 
@@ -146,12 +148,11 @@ public class Autonomous {
         ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
     }
 
-    void stopDriving() {
-        drivetrain.drive(0, 0);
+    void stopIntake(){
+        this.ballPath.getIntake().setAction(IntakeAction.STOP);
     }
 
     void stop(){
-        // drivetrain.drive(0, 0);
         this.ballPath.setAction(BallAction.NONE);
     }
     
