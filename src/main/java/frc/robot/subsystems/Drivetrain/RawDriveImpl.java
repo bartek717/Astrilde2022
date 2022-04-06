@@ -24,9 +24,13 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     private final RelativeEncoder leftEncoder;
     private final RelativeEncoder rightEncoder;
 
-    private final double aP = 0.5;
-    private final double aI = 0;
-    private final double aD = 0;
+    private final double alP = 0.108;
+    private final double alI = 0;
+    private final double alD = 0.08;
+
+    private final double arP = 0.16;
+    private final double arI = 0;
+    private final double arD = 0.08;
 
     public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide, RelativeEncoder leftEncoder, RelativeEncoder rightEncoder) {
         super(20, TimeUnit.MILLISECONDS);
@@ -38,15 +42,15 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
 
         // Left PID controller setup
         this.leftPIDController = this.leftSide.getPIDController();
-        this.leftPIDController.setP(aP);
-        this.leftPIDController.setI(aI);
-        this.leftPIDController.setD(aD);
+        this.leftPIDController.setP(alP);
+        this.leftPIDController.setI(alI);
+        this.leftPIDController.setD(alD);
 
         // Right PID controller setup
         this.rightPIDController = this.rightSide.getPIDController();
-        this.rightPIDController.setP(aP);
-        this.rightPIDController.setI(aI);
-        this.rightPIDController.setD(aD);
+        this.rightPIDController.setP(arP);
+        this.rightPIDController.setI(arI);
+        this.rightPIDController.setD(arD);
     }
 
     @Override
@@ -144,10 +148,9 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
 
     public void setPosition(double pos) {
       this.leftPIDController.setReference(pos, ControlType.kPosition);
-      System.out.println("leftPID Val: " + this.leftEncoder.getPosition());
+      // System.out.println("leftPID Val: " + this.leftEncoder.getPosition());
       this.rightPIDController.setReference(pos, ControlType.kPosition);
-      System.out.println("rightPID Val: " + this.rightEncoder.getPosition());
-
+      // System.out.println("rightPID Val: " + this.rightEncoder.getPosition());
     }
 
     public SparkMaxPIDController getLeftPIDController(){

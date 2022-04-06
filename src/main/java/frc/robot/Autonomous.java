@@ -65,13 +65,15 @@ public class Autonomous {
         double kP = 0.005;
         double tolerance = 2;
 
-        while (gyro.getAngle() < degree - tolerance || gyro.getAngle() > degree + tolerance){
-            this.leftSide.set(kP * error);
-            this.rightSide.set(-kP * error);
-            error = degree - gyro.getAngle();
-            // System.out.println(error);
+        if (degree != 0){
+            while (gyro.getAngle() < degree - tolerance || gyro.getAngle() > degree + tolerance){
+                this.leftSide.set(kP * error);
+                this.rightSide.set(-kP * error);
+                error = degree - gyro.getAngle();
+                System.out.println(error);
+            }
         }
-
+        
         this.leftSide.set(0);
         this.rightSide.set(0);
     }
@@ -116,9 +118,11 @@ public class Autonomous {
 
     private boolean atPosition(){
         boolean arrived = false;
-        double revTolerance = 1;
+        double revTolerance = 0.5;
         double leftSidePos = this.leftSide.getEncoder().getPosition();
         double rightSidePos = this.rightSide.getEncoder().getPosition();
+
+        // System.out.println("LeftSidePos: " + leftSidePos + ", RightSidePos: " + rightSidePos + " Target Pos: " + this.targetDistance);
         
         boolean leftSideArrvied = leftSidePos > this.targetDistance - revTolerance && leftSidePos < this.targetDistance + revTolerance;
         boolean rightSideArrvied = rightSidePos > this.targetDistance - revTolerance && rightSidePos < this.targetDistance + revTolerance;
@@ -148,7 +152,7 @@ public class Autonomous {
     }
 
     void stop(){
-        drivetrain.drive(0, 0);
+        // drivetrain.drive(0, 0);
         this.ballPath.setAction(BallAction.NONE);
     }
     

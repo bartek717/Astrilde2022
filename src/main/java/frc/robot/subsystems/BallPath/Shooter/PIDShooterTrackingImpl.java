@@ -199,7 +199,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
-        int[] wheelValues = {5_500, 6_800,  7_500, 8_400, 8_700, 11_000};
+        int[] wheelValues = {5_500, 6_600,  7_500, 8_400, 8_700, 11_000};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
