@@ -84,6 +84,16 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     boolean aim = true;
     double currentPosition, error;
     double difference;
+
+    // turret hood motor pif
+    private SparkMaxPIDController hoodShooterMotor_PIDController;
+    public double hoodShooterMotor_kP = 0.00015; 
+    public double hoodShooterMotor_kI = 0.00000;
+    public double hoodShooterMotor_kD = 0.01;
+    public double hoodShooterMotor_kIz = 0;
+    public double hoodShooterMotor_kFF = 0.00009;
+    public double hoodShooterMotor_kMaxOutput = 1;
+    public double hoodShooterMotor_kMinOutput = -1;
     
     // ### TURRET ROTATION PID ###
     private SparkMaxPIDController turret_PIDController;
@@ -141,6 +151,15 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
         this.hoodShooterMotor = hoodShooterMotor;
         this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
+        this.hoodShooterMotor_PIDController = hoodShooterMotor.getPIDController();
+        hoodShooterMotor_PIDController.setP(hoodShooterMotor_kP);
+        hoodShooterMotor_PIDController.setI(hoodShooterMotor_kI);
+        hoodShooterMotor_PIDController.setD(hoodShooterMotor_kD);
+        hoodShooterMotor_PIDController.setIZone(hoodShooterMotor_kIz);
+        hoodShooterMotor_PIDController.setFF(hoodShooterMotor_kFF);
+        hoodShooterMotor_PIDController.setOutputRange(hoodShooterMotor_kMinOutput, hoodShooterMotor_kMaxOutput);
+
+
         // Turret Rotation
         this.turretMotor = turretMotor;
         this.turretEncoder = turretMotor.getEncoder();
@@ -189,7 +208,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         System.out.println("Distance" + distance);
         double returnAmount = 0;
         double[] distances = {55.0, 77, 100, 120, 145, 167, 202.95, 244.77, 305.66};
-        int[] hoodValues = {  30,   75,  80,  95, 115, 115,    125,    135,    145};
+        int[] hoodValues = {  5,   40,  60,  80, 100, 100,    110,    115,    120};
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
             if(distance < key){
@@ -213,7 +232,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
-        double[] wheelValues = {0.4, .5,  .6, .7, .8, .9};
+        double[] wheelValues = {2000, 3500,  5000, 6500, 8000, 9000};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -294,11 +313,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 5_750;
+                setPointShooterPID = 3_750;
                 setPointHood = 5;
                 setPointRotation = 0;
                 shoot = true;
-                hoodShooterMotorSpeed = 0.15;
+                hoodShooterMotorSpeed = 2000;
                 System.out.println("FENDER");
                 break;
             case GENERAL:
@@ -333,7 +352,9 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 break;
         }
 
-        this.hoodShooterMotor.set(hoodShooterMotorSpeed);
+        this.hoodShooterMotor_PIDController.setReference(hoodShooterMotorSpeed, CANSparkMax.ControlType.kVelocity);
+        SmartDashboard.putNumber("Hood SHOOTER CURRENT VELOCITY", hoodShooterMotorEncoder.getVelocity());
+        SmartDashboard.putNumber("Hood SHOOTER CURRRENT SETPOINT", hoodShooterMotorSpeed);
 
         // hood position
         if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
@@ -475,6 +496,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         boolean hoodShooterReady = false;
         if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 400 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 400){
             shooterReady = true;
+            System.out.println(Math.abs(shooterEncoderReadingVelocity));
         }
         if(turretRotation > setPointRotation - 2.5 && turretRotation < setPointRotation + 2.5){
             turretReady = true;
@@ -482,7 +504,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         if(hoodAngle > setPointHood - 2 && hoodAngle < setPointHood + 2){
             hoodReady = true;
         }
-        if(hoodShooterMotorEncoder.getVelocity() > hoodShooterMotorSpeed * 10000){
+        if(hoodShooterMotorEncoder.getVelocity() > hoodShooterMotorSpeed - 200 && hoodShooterMotorEncoder.getVelocity() < hoodShooterMotorSpeed + 200){
             hoodShooterReady = true;
 
         }
