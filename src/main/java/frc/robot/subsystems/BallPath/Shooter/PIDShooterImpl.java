@@ -319,4 +319,10 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 break;
         }
     }
+
+    @Override
+    public int getBallsShooter() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 }

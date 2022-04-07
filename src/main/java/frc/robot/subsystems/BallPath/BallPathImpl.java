@@ -7,6 +7,7 @@ import javax.swing.text.DefaultStyledDocument.ElementSpec;
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.BallPath.Elevator.Elevator;
 import frc.robot.subsystems.BallPath.Elevator.ElevatorImpl;
 import frc.robot.subsystems.BallPath.Elevator.Elevator.ElevatorAction;
@@ -24,6 +25,9 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private Spark blinkenController;
     boolean checkBall = false;
     boolean noShoot = false;
+    private boolean flipped = false;
+    private boolean ballSent = false;
+    int startBall = 1;
 
     private volatile BallAction action = BallAction.NONE;
 
@@ -49,6 +53,8 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void task() {
+        int ballNumber = startBall + intake.getBallsIntake() - shooter.getBallsShooter();
+        SmartDashboard.putNumber("BALL NUMBER", ballNumber);
 
 
         switch (action) {
@@ -74,22 +80,45 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 }
                 break;
             case SHOOTFENDER:
+                
+                
                 this.shooter.setShotPosition(ShotPosition.FENDER);
-                if(shooter.readyToShoot()){
-                    if (!elevator.ballPrimed()){
+                // if(shooter.readyToShoot()){
+                //     if (!elevator.ballPrimed()){
+                //         elevator.setAction(ElevatorAction.INDEX);
+                //     }else{
+                //         elevator.setAction(ElevatorAction.PRIME);
+                //     }
+                // }else{
+                //     elevator.setAction(ElevatorAction.INDEX);
+                // }
+                
+                if(elevator.ballPrimed() && ballNumber != 0){
+                    if(ballNumber == 2 && !ballSent){
+                        if(shooter.readyToShoot()){
+                            elevator.setAction(ElevatorAction.PRIME);
+                        }
+                    }else if(ballNumber == 2 && ballSent){
                         elevator.setAction(ElevatorAction.INDEX);
-                    }else{
+                    }else if(ballNumber == 1 && shooter.readyToShoot()){
                         elevator.setAction(ElevatorAction.PRIME);
                     }
-                }else{
+
+                }else if(ballNumber != 0){
+                    ballSent = true;
                     elevator.setAction(ElevatorAction.INDEX);
+                }else{
+                    ballSent = false;
                 }
+                
                 break;
             case NONE:
                 this.intake.setAction(IntakeAction.STOP);
                 this.elevator.setAction(ElevatorAction.STOP);
                 this.shooter.setShotPosition(ShotPosition.NONE);
                 checkBall = false;
+                ballSent = false;
+                flipped = false;
                 break;
             case INDEX:
                 this.elevator.setAction(ElevatorAction.INDEX);
@@ -108,6 +137,8 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 intake.setAction(IntakeAction.NONE);
                 elevator.setAction(ElevatorAction.NONE);
                 shooter.setShotPosition(ShotPosition.NONE);
+                ballSent = false;
+                flipped = false;
                 break;
         }
 

@@ -84,6 +84,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     boolean aim = true;
     double currentPosition, error;
     double difference;
+    int count;
 
     // turret hood motor pif
     private SparkMaxPIDController hoodShooterMotor_PIDController;
@@ -143,6 +144,9 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     int seen = 0;
     long logItter = 0;
     private double hoodShooterMotorSpeed = 0;
+    int ballsOut = 0;
+    boolean flipped = false;
+    boolean ramped = false;
  
     
 
@@ -313,7 +317,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 3_750;
+                setPointShooterPID = 3_750; // 5500?
                 setPointHood = 5;
                 setPointRotation = 0;
                 shoot = true;
@@ -349,6 +353,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 setPointShooterPID = 0;
                 hoodShooterMotorSpeed = 0;
                 aim = true;
+                
                 break;
         }
 
@@ -508,12 +513,27 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             hoodShooterReady = true;
 
         }
-        System.out.println(hoodShooterMotorEncoder.getVelocity());
-        System.out.println(hoodAngle);
-        System.out.println(setPointHood);
-        System.out.println(turretReady + " " + shooterReady + " " + hoodReady + " " + hoodShooterReady);
+        // System.out.println(hoodShooterMotorEncoder.getVelocity());
+        // System.out.println(hoodAngle);
+        // System.out.println(setPointHood);
+        // System.out.println(turretReady + " " + shooterReady + " " + hoodReady + " " + hoodShooterReady);
+        if(shooterReady && !ramped && !flipped){
+            ramped = true;
+            flipped = false;
+            System.out.println(ramped + " " + flipped);
+        }else{
+            if(!flipped && ramped){
+                ballsOut += 1;
+                flipped = true;
+                ramped = false;
+            }
+        }
         return turretReady && shooterReady && hoodReady && hoodShooterReady;
         
+    }
+
+    public int getBallsShooter(){
+        return ballsOut;
     }
 
     @Override

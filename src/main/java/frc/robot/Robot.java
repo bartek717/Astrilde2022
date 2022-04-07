@@ -147,8 +147,7 @@ public class Robot extends TitanBot {
 
     // INTAKE COMPONENTS
     WPI_TalonSRX intakeMotorController = new WPI_TalonSRX(RobotMap.INTAKE_TALON_PORT);
-    Ultrasonic intakeSensor = new Ultrasonic(RobotMap.INTAKE_ULTRASONIC_PORTS[0], RobotMap.INTAKE_ULTRASONIC_PORTS[1]);
-    this.intake = new IntakeImpl(intakeMotorController, intakeSensor);
+    this.intake = new IntakeImpl(intakeMotorController, intakeBeam);
 
     // SHOOTER COMPONENTS
     CANSparkMax turretMotor = new CANSparkMax(RobotMap.TURRET_PORT, MotorType.kBrushless);
@@ -176,8 +175,7 @@ public class Robot extends TitanBot {
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
-    Ultrasonic elevatorSensor = new Ultrasonic(RobotMap.ELEVATOR_ULTRASONIC_PORTS[0], RobotMap.ELEVATOR_ULTRASONIC_PORTS[1]);
-    this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor, elevatorBeam);
+    this.elevator = new ElevatorImpl(elevatorMotorController, shooter, m_colorSensor, elevatorBeam);
 
     this.ballSubsystem = new BallPathImpl(intake, elevator, shooter,blinkenController);
     

@@ -24,7 +24,6 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     private static final int SAMPLE_COUNT = 1;
 
     private final WPI_TalonSRX elevator;
-    private final Ultrasonic sensor;
     private final Shooter shooter;
     private final DigitalInput beam;
 
@@ -35,11 +34,10 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     long count = 0;
     private boolean detectedBall = false;
 
-    public ElevatorImpl(WPI_TalonSRX elevator, Ultrasonic sensor, Shooter shooter, ColorSensorV3 elevatorColorSensor, DigitalInput beam) {
+    public ElevatorImpl(WPI_TalonSRX elevator, Shooter shooter, ColorSensorV3 elevatorColorSensor, DigitalInput beam) {
         super(20, TimeUnit.MILLISECONDS);
         this.elevatorColorSensor = elevatorColorSensor;
         this.elevator = elevator;
-        this.sensor = sensor;
         this.shooter = shooter;
         this.beam = beam;
     }
@@ -47,7 +45,7 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
     @Override
     public void defineResources() {
         require(elevator);
-        require(sensor);
+        require(beam);
         require(shooter);
     }
 
