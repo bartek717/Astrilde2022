@@ -22,4 +22,7 @@ public final class ControllerBindings {
 
     public static final LogitechButton DRIVE_REVERSE = LogitechButton.LEFT_BUMPER;
 
+    // Potential climber aspects (not required; one can instead utilize RIGHT_STICK and LEFT_STICK if they prefer in Robot.java).
+    public static final LogitechControl CLIMBER = LogitechControl.LEFT_STICK;
+    public static final LogitechControl CLIMBER_LIFTER = LogitechControl.RIGHT_STICK;
 }

@@ -6,6 +6,8 @@ package frc.robot;
 
 import java.util.concurrent.TimeUnit;
 
+import com.ctre.phoenix.motorcontrol.FollowerType;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -48,6 +50,7 @@ import frc.robot.subsystems.BallPath.Shooter.PIDShooterImpl;
 import frc.robot.subsystems.BallPath.Shooter.PIDShooterTrackingImpl;
 import frc.robot.subsystems.BallPath.Shooter.RawShooterImpl;
 import frc.robot.subsystems.Climber.Climber;
+import frc.robot.subsystems.Climber.ClimberImpl;
 import frc.robot.subsystems.Drivetrain.Drive;
 import frc.robot.subsystems.Drivetrain.RawDriveImpl;
 import com.kauailabs.navx.frc.AHRS;
@@ -186,9 +189,18 @@ public class Robot extends TitanBot {
     this.driverPad = new LogitechDualAction(RobotMap.DRIVER_PAD_PORT);
     this.operatorPad = new LogitechDualAction(RobotMap.OPERATOR_PAD_PORT);
 
-    //this.climberSubsystem = new ClimberImpl();
+    // CLIMBER COMPONENTS.
+    WPI_TalonSRX primaryClimberMotorController = new WPI_TalonSRX(9);  // Port will change.
+    WPI_TalonSRX followerClimberMotorController = new WPI_TalonSRX(9);  // Port will change.
+    CANSparkMax shoulderMotorController = new CANSparkMax(9, MotorType.kBrushless);  // Port will change.
 
+    // Restore factory defaults method (of which is not supported [under the same name] for Talon SRX)?
+    followerClimberMotorController.follow(primaryClimberMotorController);
+    followerClimberMotorController.setInverted(InvertType.OpposeMaster);  // Invert the follower?
+
+    this.climberSubsystem = new ClimberImpl(primaryClimberMotorController, followerClimberMotorController, shoulderMotorController);
     
+
     ahrs = new AHRS(SPI.Port.kMXP); 
 
     // register lifecycle components
@@ -299,12 +311,14 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTGENERAL));
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
 
-    this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> 
-    setToggle(!getToggle())
-    );
+    this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> setToggle(!getToggle()));
 
 
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
+
+    // Testing climber bindings.
+    this.operatorPad.setMode(ControllerBindings.CLIMBER, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.2));  // Not certain as to whether this is correct or not.
+    this.operatorPad.setMode(ControllerBindings.CLIMBER_LIFTER, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.2));  // Not certain as to whether this is correct or not.
     
     driverPad.start();
     operatorPad.start();
@@ -313,18 +327,20 @@ public class Robot extends TitanBot {
     elevator.start();
     shooter.start();
     ballSubsystem.start();
-
-
+    climberSubsystem.start();  // Hopefully this is correct?
   }
+
   /** This function is called periodically during operator control. */
   @Override
   public void teleopRoutine() {
+      // Drivetrain.
       double forward, turn;
       forward = this.driverPad.getValue(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS);
       turn = this.driverPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS);
 
       this.drive.drive(forward, turn); 
 
+      // Ballpath.
       if(toggle){
         this.ballSubsystem.setAction(BallAction.NO_SHOOT);
         set = false;
@@ -334,7 +350,15 @@ public class Robot extends TitanBot {
           set = true;
         }
       }
-      }
+
+      // Climber (attempt).
+      double climber, shoulderSpeed;
+      climber = this.operatorPad.getValue(ControllerBindings.CLIMBER, ControllerBindings.Y_AXIS);
+      shoulderSpeed = this.operatorPad.getValue(ControllerBindings.CLIMBER_LIFTER, ControllerBindings.Y_AXIS);
+
+      this.climberSubsystem.extendOuterClimber(climber);
+      this.climberSubsystem.extendShoulderLifter(shoulderSpeed);
+    }
 
   static DpadDirection angleToDpadDirection(int angle) {
       for (DpadDirection d : DpadDirection.values()) {
@@ -355,6 +379,7 @@ public class Robot extends TitanBot {
     elevator.cancel();
     shooter.cancel();
     ballSubsystem.cancel();
+    climberSubsystem.cancel();
   }
 
   /** This function is called periodically when disabled. */
