@@ -235,11 +235,6 @@ public class PIDDriveImpl extends RepeatingPooledSubsystem implements Drive {
     }
 
     @Override
-    public double getHeading() {
-        return 0;
-    }
-
-    @Override
     public void resetEncoderTicks() {
         this.leftEncoder.setPosition(0);
         this.rightEncoder.setPosition(0);

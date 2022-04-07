@@ -15,6 +15,7 @@ public interface Shooter extends Subsystem, LifecycleListener {
     void stopMotors();
     void setShotPosition(ShotPosition shotPosition);
     void resetSensors();
+    int getBallsShooter();
     // CANSparkMax getHoodMotor();
 
     enum ShotPosition {
@@ -26,7 +27,9 @@ public interface Shooter extends Subsystem, LifecycleListener {
         TEST,
         TEST2,
         GENERAL, 
-        RESET
+        RESET,
+        STARTAIM,
+        STOPAIM
         ;
     }
 }

@@ -27,9 +27,9 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     private final TalonFX shooterMotor;
     private final TalonSRX hoodMotor;
 
-    static final double kp = 0.0023; // 0.00175
-    static final double ki = 0.00002; // 0.00002
-    static final double kd = 0.00002; // 0.00002
+    static final double kp = 0.0026; // 0.00175
+    static final double ki = 0.000005; // 0.00002
+    static final double kd = 0.0001; // 0.00002
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
     private int stallCount = 0;
@@ -199,6 +199,12 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 setPointHood = 0;
                 setPointRotation = 0;
                 break;
+            case STARTAIM:
+                centerUsingLimelight = true;
+                break;
+            case STOPAIM:
+                centerUsingLimelight = false;
+                break;
             default:
                 break;
         }
@@ -339,5 +345,11 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 this.hoodMotor.setSelectedSensorPosition(0);
                 break;
         }
+    }
+
+    @Override
+    public int getBallsShooter() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

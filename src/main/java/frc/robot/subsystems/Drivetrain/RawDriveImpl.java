@@ -2,6 +2,7 @@ package frc.robot.subsystems.Drivetrain;
 
 import java.util.concurrent.TimeUnit;
 
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
@@ -9,9 +10,16 @@ import com.revrobotics.CANSparkMax.ControlType;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive.WheelSpeeds;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.util.Units;
 
 public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
 
@@ -24,6 +32,10 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     private final RelativeEncoder leftEncoder;
     private final RelativeEncoder rightEncoder;
 
+    Pose2d pose;
+
+    AHRS gyro = new AHRS(SPI.Port.kMXP);
+
     private final double alP = 0.108;
     private final double alI = 0;
     private final double alD = 0.08;
@@ -32,8 +44,7 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     private final double arI = 0;
     private final double arD = 0.08;
 
-    public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide) {
-        super(20, TimeUnit.MILLISECONDS);
+    public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide) {        super(20, TimeUnit.MILLISECONDS);
         // basic drivetrain stuff
         this.leftSide = leftSide;
         this.rightSide = rightSide;
@@ -53,6 +64,10 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
         this.rightPIDController.setD(arD);
     }
 
+    DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Units.inchesToMeters(24.66));
+    DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(getHeading());
+
+
     @Override
     public void defineResources() {
         require(leftSide);
@@ -62,9 +77,21 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
         require(rightEncoder);
     }
 
+    public double lSpeed(){
+      return leftSide.getEncoder().getVelocity()/5*2*Math.PI*Units.inchesToMeters(2)/60;
+    }
+
+    public double rSpeed(){
+      return rightSide.getEncoder().getVelocity()/5*2*Math.PI*Units.inchesToMeters(2)/60;
+    }
+
     @Override
     public void task() throws Exception {
-        // TODO Auto-generated method stub
+        pose = odometry.update(getHeading(), lSpeed(), rSpeed());
+    }
+
+    public Rotation2d getHeading(){
+      return Rotation2d.fromDegrees(-this.gyro.getAngle());
     }
 
     public static WheelSpeeds arcadeDriveIK(double xSpeed, double zRotation, boolean squareInputs) {
@@ -125,20 +152,6 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
       return Pair.of(this.leftEncoder.getPosition(), this.rightEncoder.getPosition());
     }
 
-    @Override
-    public CANSparkMax getLeftSide(){
-      return this.leftSide;
-    }
-
-    @Override
-    public CANSparkMax getRightSide(){
-      return this.rightSide;
-    }
-
-    @Override
-    public double getHeading() {
-        return 0;
-    }
 
     @Override
     public void resetEncoderTicks() {
@@ -164,6 +177,16 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     public void setOutputRange(double percent){
       this.leftPIDController.setOutputRange(-percent, percent);
       this.rightPIDController.setOutputRange(-percent, percent);
+    }
+
+    @Override
+    public CANSparkMax getLeftSide(){
+      return this.leftSide;
+    }
+
+    @Override
+    public CANSparkMax getRightSide(){
+      return this.rightSide;
     }
     
     @Override
