@@ -212,7 +212,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         System.out.println("Distance" + distance);
         double returnAmount = 0;
         double[] distances = {55.0, 77, 100, 120, 145, 167, 202.95, 244.77, 305.66};
-        int[] hoodValues = {  5,   40,  60,  80, 100, 100,    110,    115,    120};
+        int[] hoodValues = {  5,   40,  60,  90, 110, 115,    120,    125,    130};
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
             if(distance < key){
@@ -236,7 +236,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
-        double[] wheelValues = {2000, 3500,  5000, 6500, 8000, 9000};
+        double[] wheelValues = {2000, 5500,  8000, 9000, 10000, 10500};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -257,7 +257,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
-        int[] wheelValues = {5_500, 6_800,  7_500, 8_400, 8_700, 11_000};
+        int[] wheelValues = {5_500, 5_500,  5_700, 6_100, 7_000, 9_700};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -271,6 +271,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                 break;
             }
         }
+        SmartDashboard.putNumber("RETURN AMOUNT", returnAmount); 
         return returnAmount;
     }
 
@@ -317,11 +318,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 3_750; // 5500?
-                setPointHood = 5;
+                setPointShooterPID = 4_250;
+                setPointHood = 0;
                 setPointRotation = 0;
                 shoot = true;
-                hoodShooterMotorSpeed = 2000;
+                hoodShooterMotorSpeed = 3750;
                 System.out.println("FENDER");
                 break;
             case GENERAL:
@@ -499,14 +500,14 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         boolean turretReady = false;
         boolean hoodReady = false;
         boolean hoodShooterReady = false;
-        if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 400 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 400){
+        if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 250 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 250){
             shooterReady = true;
             System.out.println(Math.abs(shooterEncoderReadingVelocity));
         }
         if(turretRotation > setPointRotation - 2.5 && turretRotation < setPointRotation + 2.5){
             turretReady = true;
         }
-        if(hoodAngle > setPointHood - 2 && hoodAngle < setPointHood + 2){
+        if(hoodAngle > setPointHood - 1 && hoodAngle < setPointHood + 1){
             hoodReady = true;
         }
         if(hoodShooterMotorEncoder.getVelocity() > hoodShooterMotorSpeed - 200 && hoodShooterMotorEncoder.getVelocity() < hoodShooterMotorSpeed + 200){
@@ -557,6 +558,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case ON_INIT:
                 // this.hoodMotor.setSelectedSensorPosition(0);
                 this.hoodEncoder.setPosition(0);
+                this.turretEncoder.setPosition(0);
             case ON_AUTO:
             case ON_TELEOP:
             case ON_TEST:

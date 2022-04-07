@@ -167,9 +167,9 @@ public class Robot extends TitanBot {
     Spark blinkenController = new Spark(8);
 
     CANSparkMax hoodShooterMotor = new CANSparkMax(RobotMap.HOOD_SHOOTER_PORT, MotorType.kBrushless);
-    hoodMotor.restoreFactoryDefaults();
-    hoodMotor.setSmartCurrentLimit(20);
-    hoodMotor.setInverted(true);
+    hoodShooterMotor.restoreFactoryDefaults();
+    hoodShooterMotor.setSmartCurrentLimit(20);
+    hoodShooterMotor.setInverted(true);
 
     this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
 
