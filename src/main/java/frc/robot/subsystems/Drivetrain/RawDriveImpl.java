@@ -160,6 +160,11 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     public SparkMaxPIDController getRightPIDController(){
       return this.rightPIDController;
     }
+
+    public void setOutputRange(double percent){
+      this.leftPIDController.setOutputRange(-percent, percent);
+      this.rightPIDController.setOutputRange(-percent, percent);
+    }
     
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {

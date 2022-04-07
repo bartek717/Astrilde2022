@@ -144,14 +144,13 @@ public class Autonomous {
         ballPath.getIntake().setAction(Intake.IntakeAction.IN);
     }
 
-    void shoot(double multiplier) throws InterruptedException {
-        if (this.atPosition(0.75)) {
-            ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
+    boolean shoot(double multiplier) {
+        if (this.atPosition(multiplier) && this.ballPath.getElevator().ballPrimed()) {
+            ((RawDriveImpl) this.drivetrain).setOutputRange(0.2);
+            ballPath.setAction(BallAction.SHOOTGENERAL);
+            return true;
         }
-    }
-
-    void stopIntake(){
-        this.ballPath.getIntake().setAction(IntakeAction.STOP);
+        return false;
     }
 
     void stop(){

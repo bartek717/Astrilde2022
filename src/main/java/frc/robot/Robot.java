@@ -305,18 +305,19 @@ public class Robot extends TitanBot {
         auto.resetPosition();
         Timer.delay(1);
         turned = true;
-        shot = false;
+        // shot = false;
       }
 
       if (!auto.atPosition(1)){ // if bot hasn't driven to target distance yet
         auto.drive();
         if (targets[index][2] == 1 && !shot){
-          auto.shoot(targets[index][3]);
+          shot = auto.shoot(targets[index][3]);
         }
       } else {
         Timer.delay(1);
         auto.resetPosition();
         turned = false;
+        shot = false;
         index += 1;
       }
     }
