@@ -31,8 +31,8 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
         double rightClimberMotorControllerPosition = followerClimberMotorController.getSelectedSensorPosition();
 
         // Ensure that the time entered is within Endgame to avoid potential accidents.
-        if (Timer.getMatchTime() > 120) {
-            if (rightClimberMotorControllerPosition > 0 || leftClimberMotorControllerPosition > 0) {
+        if (Timer.getMatchTime() > 100) {
+            if (rightClimberMotorControllerPosition > 500000 || leftClimberMotorControllerPosition > 500000) {
                 this.primaryClimberMotorController.set(0);
             } else {
                 this.primaryClimberMotorController.set(speed); 
@@ -65,11 +65,11 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
     // The Neo motor controller.
     @Override
     public void extendShoulderLifter(double speed) {
-        if (Timer.getMatchTime() > 120) {
+        if (Timer.getMatchTime() > 100) {
             // Obtain the shoulderMotorController encoder reading position.
             double shoulderMotorControllerPosition = shoulderMotorController.getEncoder().getPosition();
 
-            if (shoulderMotorControllerPosition > 0) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
+            if (shoulderMotorControllerPosition > 500000) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
                 this.shoulderMotorController.set(0);
             } else {
                 this.shoulderMotorController.set(speed);

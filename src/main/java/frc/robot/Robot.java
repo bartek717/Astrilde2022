@@ -190,16 +190,16 @@ public class Robot extends TitanBot {
     this.operatorPad = new LogitechDualAction(RobotMap.OPERATOR_PAD_PORT);
 
     // CLIMBER COMPONENTS.
-    WPI_TalonSRX primaryClimberMotorController = new WPI_TalonSRX(9);  // Port will change.
-    WPI_TalonSRX followerClimberMotorController = new WPI_TalonSRX(9);  // Port will change.
-    CANSparkMax shoulderMotorController = new CANSparkMax(9, MotorType.kBrushless);  // Port will change.
+    WPI_TalonSRX primaryClimberMotorController = new WPI_TalonSRX(RobotMap.CLIMBER_TALON_PORTS[0]); 
+    WPI_TalonSRX followerClimberMotorController = new WPI_TalonSRX(RobotMap.CLIMBER_TALON_PORTS[1]); 
+    CANSparkMax shoulderMotorController = new CANSparkMax(RobotMap.NEO_SHOULDER_LIFTER_PORT, MotorType.kBrushless); 
 
     // Restore factory defaults method (of which is not supported [under the same name] for Talon SRX)?
     followerClimberMotorController.follow(primaryClimberMotorController);
     followerClimberMotorController.setInverted(InvertType.OpposeMaster);  // Invert the follower?
 
     this.climberSubsystem = new ClimberImpl(primaryClimberMotorController, followerClimberMotorController, shoulderMotorController);
-    
+    System.out.println("CLIMBER" + this.climberSubsystem);
 
     ahrs = new AHRS(SPI.Port.kMXP); 
 
@@ -211,6 +211,7 @@ public class Robot extends TitanBot {
     registerLifecycleComponent(elevator);
     registerLifecycleComponent(shooter);
     registerLifecycleComponent(ballSubsystem);
+    registerLifecycleComponent(climberSubsystem);
     System.out.println("Robot setup complete");
   }
 
@@ -317,8 +318,8 @@ public class Robot extends TitanBot {
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
 
     // Testing climber bindings.
-    this.operatorPad.setMode(ControllerBindings.CLIMBER, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.2));  // Not certain as to whether this is correct or not.
-    this.operatorPad.setMode(ControllerBindings.CLIMBER_LIFTER, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.2));  // Not certain as to whether this is correct or not.
+    this.operatorPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.5));  // Not certain as to whether this is correct or not.
+    this.operatorPad.setMode(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.5));  // Not certain as to whether this is correct or not.
     
     driverPad.start();
     operatorPad.start();
@@ -353,8 +354,10 @@ public class Robot extends TitanBot {
 
       // Climber (attempt).
       double climber, shoulderSpeed;
-      climber = this.operatorPad.getValue(ControllerBindings.CLIMBER, ControllerBindings.Y_AXIS);
-      shoulderSpeed = this.operatorPad.getValue(ControllerBindings.CLIMBER_LIFTER, ControllerBindings.Y_AXIS);
+      climber = this.operatorPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.Y_AXIS);
+      shoulderSpeed = this.operatorPad.getValue(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS);
+
+      System.out.println("PLEASE SEE THIS: " + climber + " " + shoulderSpeed);
 
       this.climberSubsystem.extendOuterClimber(climber);
       this.climberSubsystem.extendShoulderLifter(shoulderSpeed);
