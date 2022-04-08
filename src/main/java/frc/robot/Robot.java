@@ -316,7 +316,7 @@ public class Robot extends TitanBot {
       // if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
       //   hasShot = auto.shoot();
       //   // Timer.delay(2);
-      //   auto.stopShooting();
+      //   //auto.stopShooting();
       // } else if (!auto.ballPresent()){
       //   Timer.delay(1);
       //   auto.stopShooting();
@@ -327,7 +327,7 @@ public class Robot extends TitanBot {
         if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
           hasShot = auto.shoot();
           // Timer.delay(2);
-          auto.stopShooting();
+          // auto.stopShooting();
         } else if (!auto.ballPresent()){
           Timer.delay(1);
           auto.stopShooting();
