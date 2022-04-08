@@ -347,7 +347,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case STARTAIM:
                 System.out.println("STARTAIM");
             default:
-                System.out.println("DEFAULT");
+                // System.out.println("DEFAULT");
                 shootFender = false;
                 setPointHood = 0;
                 shoot = false;

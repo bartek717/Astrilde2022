@@ -60,23 +60,29 @@ public class Autonomous {
         // this.positionPIDController.setTolerance(DRIVE_DIST_TOLERANCE);
     }
 
-    public void turn(AHRS gyro, double degree) {
-        gyro.reset();
-        double error = degree - gyro.getAngle();
+    public boolean turn(AHRS gyro, double degree) throws InterruptedException {
+        // gyro.reset();
+        double target = gyro.getAngle() + degree;
+        double error = target - gyro.getAngle();
         double kP = 0.005;
         double tolerance = 2;
 
         if (degree != 0){
-            while (gyro.getAngle() < degree - tolerance || gyro.getAngle() > degree + tolerance){
+            while (gyro.getAngle() < target - tolerance || gyro.getAngle() > target + tolerance){
+                Thread.sleep(20);
                 this.leftSide.set(kP * error);
                 this.rightSide.set(-kP * error);
-                error = degree - gyro.getAngle();
-                System.out.println(error);
+                error = target - gyro.getAngle();
+                if (Robot.DEBUG){
+                    System.out.println(error);
+                }
             }
         }
 
         this.leftSide.set(0);
         this.rightSide.set(0);
+
+        return true;
     }
 
     public void resetPosition(){
@@ -96,8 +102,9 @@ public class Autonomous {
         return revs;
     }
 
-    public void setDriveDistance(double distance) {
+    public boolean setDriveDistance(double distance) {
         this.targetDistance = convertIR(distance);
+        return true;
         // positionPIDController.setSetpoint(this.targetDistance);
     }
 
@@ -105,28 +112,21 @@ public class Autonomous {
         /*
         :targetPosition: distance to be driven in inches -> double
         */
-
-        // double dampener = 0.03;
-
-        // double position = (this.leftSide.getEncoder().getPosition() + this.rightSide.getEncoder().getPosition()) / 2;
-
-        // double nextPos = positionPIDController.calculate(position);
-
         ((RawDriveImpl) this.drivetrain).setPosition(this.targetDistance);
 
-        // return positionPIDController.atSetpoint();
     }
 
-    public boolean atPosition(double multiplier){
+    public boolean atPosition(){
         boolean arrived = false;
         double revTolerance = 0.5;
         double leftSidePos = this.leftSide.getEncoder().getPosition();
         double rightSidePos = this.rightSide.getEncoder().getPosition();
 
-        // System.out.println("LeftSidePos: " + leftSidePos + ", RightSidePos: " + rightSidePos + " Target Pos: " + this.targetDistance);
-        
-        boolean leftSideArrvied = leftSidePos > (this.targetDistance * multiplier) - revTolerance && leftSidePos < this.targetDistance + revTolerance;
-        boolean rightSideArrvied = rightSidePos > (this.targetDistance * multiplier) - revTolerance && rightSidePos < this.targetDistance + revTolerance;
+        if (Robot.DEBUG){
+            System.out.println("LeftSidePos: " + leftSidePos + ", RightSidePos: " + rightSidePos + " Target Pos: " + this.targetDistance);
+        }
+        boolean leftSideArrvied = leftSidePos > this.targetDistance - revTolerance && leftSidePos < this.targetDistance + revTolerance;
+        boolean rightSideArrvied = rightSidePos > this.targetDistance - revTolerance && rightSidePos < this.targetDistance + revTolerance;
         
         if (leftSideArrvied && rightSideArrvied) {
             arrived = true;
@@ -136,21 +136,17 @@ public class Autonomous {
     }
 
     void prepareToShoot(){
-        // boolean intakeLoaded = ballPath.getIntake().ballPrimed();
-        // boolean elevatorLoaded = ballPath.getElevator().ballPrimed();
-        // boolean robotFull = intakeLoaded && elevatorLoaded;
-
-        ballPath.setAction(BallPath.BallAction.SHOOTGENERAL);
-        ballPath.getIntake().setAction(Intake.IntakeAction.IN);
+        
+        ballPath.setAction(BallAction.INDEX);
     }
 
-    boolean shoot(double multiplier) {
-        if (this.atPosition(multiplier) && this.ballPath.getElevator().ballPrimed()) {
-            ((RawDriveImpl) this.drivetrain).setOutputRange(0.2);
-            ballPath.setAction(BallAction.SHOOTGENERAL);
-            return true;
-        }
-        return false;
+    void stopShooting(){
+        this.ballPath.setAction(BallAction.YES_SHOOT);
+    }
+
+    boolean shoot() {
+        this.ballPath.setAction(BallAction.SHOOTGENERAL);
+        return true;
     }
 
     void stop(){

@@ -103,9 +103,9 @@ public class Robot extends TitanBot {
   public void robotSetup() {
     System.out.println("Robot setup start");
     m_chooser.setDefaultOption("Five Ball Auto", k5Ball);
-    m_chooser.setDefaultOption("Four Ball Auto", k4Ball);
-    m_chooser.setDefaultOption("Three Ball Auto", k3Ball);
-    m_chooser.setDefaultOption("Two Ball Auto", k2Ball);
+    m_chooser.addOption("Four Ball Auto", k4Ball);
+    m_chooser.addOption("Three Ball Auto", k3Ball);
+    m_chooser.addOption("Two Ball Auto", k2Ball);
 
     SmartDashboard.putData("Auto choices", m_chooser);
 
@@ -256,37 +256,34 @@ public class Robot extends TitanBot {
   @Override
   public void autonomousRoutine() throws InterruptedException {
 
-    double[][] targets = {{0, 0, 0}};
+    double[][] targets = {{0, 0, 0}}; //{38,0, 0}, {89,112, 1}, {155,-29, 0},{-50,0, 1}
 
     switch (m_autoSelected) {
       case k5Ball:
         targets = new double[][] {
-          {35, 0, 0, 1}, 
-          {-10, 0, 0, 1}, 
-          {60, 105, 1, 0.75}, 
-          {150, -30, 0, 1}, 
-          {-50, 0, 1, 1}
+          {38, 0, 1},
+          {89, 112, 1}, 
+          {155, -29, 0}, 
+          {-50, 0, 1}
         };
         break;
       case k4Ball:
         targets = new double[][] {
-          {35, 0, 0, 1}, 
-          {-10, 0, 0, 1}, 
-          {60, 105, 1, 0.75}, 
-          {150, -30, 0, 1}, 
-          {-50, 0, 1, 1}
+          {38, 0, 1},
+          {89, 112, 1}, 
+          {155, -29, 0}, 
+          {-50, 0, 1}
         };
         break;
       case k3Ball:
         targets = new double[][] {
-          {35, 0, 0, 1}, 
-          {-10, 0, 0, 1}, 
-          {60, 105, 1, 0.75}, 
+          {38, 0, 1},
+          {89, 112, 1}
         };
         break;
       case k2Ball:
         targets = new double[][] {
-          {35, 0, 1, 1}, 
+          {38, 0, 1}, 
         };
         break;
       default:
@@ -296,39 +293,48 @@ public class Robot extends TitanBot {
 
     int index = 0;
     boolean doneAuto = false;
-    boolean turned = false;
-    boolean shot = false;
+    boolean driveDistanceSet = false;
+    boolean hasTurned = false;
+    boolean hasShot = false;
 
     auto.resetPosition();
+
     while (!doneAuto) {
-      if (index == targets.length-1) { // If auto is complete
-        doneAuto = true;
-      }
       auto.prepareToShoot();
-      if (!turned) { // If turn has not been made
-        auto.setDriveDistance(targets[index][0]);
-        // System.out.println("Is about to turn");
-        auto.turn(ahrs, targets[index][1]);
-        // System.out.println("Has turned");
+
+      if (!driveDistanceSet){
+        driveDistanceSet = auto.setDriveDistance(targets[index][0]);
+      }
+  
+      if (!hasTurned && targets[index][1] != 0) { // turn cycle not complete
+        hasTurned = auto.turn(ahrs, targets[index][1]);
         auto.resetPosition();
         Timer.delay(1);
-        turned = true;
-        // shot = false;
       }
 
-      if (!auto.atPosition(1)){ // if bot hasn't driven to target distance yet
+      if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+        hasShot = auto.shoot();
+        Timer.delay(2);
+        auto.stopShooting();
+      }
+
+      if (!auto.atPosition() && targets[index][0] != 0){ // drive cycle not complete 
         auto.drive();
-        if (targets[index][2] == 1 && !shot){
-          shot = auto.shoot(targets[index][3]);
-        }
-      } else {
-        Timer.delay(1);
+      } else { // drive cycle complete
+        Timer.delay(0.5);
         auto.resetPosition();
-        turned = false;
-        shot = false;
+        driveDistanceSet = false;
+        hasTurned = false;
+        hasShot = false;
         index += 1;
       }
+
+      if (index == targets.length) { // If auto is complete
+        doneAuto = true;
+      }
     }
+
+    auto.stop();
 
   }
 
