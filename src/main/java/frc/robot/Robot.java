@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import java.sql.Time;
 import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
@@ -23,12 +24,16 @@ import ca.team3161.lib.utils.controls.InvertedJoystickMode;
 import ca.team3161.lib.utils.controls.JoystickMode;
 import ca.team3161.lib.utils.controls.LogitechDualAction;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.cscore.VideoMode;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -44,10 +49,14 @@ import frc.robot.subsystems.BallPath.Intake.IntakeImpl;
 import frc.robot.subsystems.BallPath.Shooter.Shooter;
 import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 import frc.robot.subsystems.BallPath.Shooter.PIDShooterImpl;
+import frc.robot.subsystems.BallPath.Shooter.PIDShooterTrackingImpl;
 import frc.robot.subsystems.BallPath.Shooter.RawShooterImpl;
 import frc.robot.subsystems.Climber.Climber;
 import frc.robot.subsystems.Drivetrain.Drive;
 import frc.robot.subsystems.Drivetrain.RawDriveImpl;
+import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.SPI;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -57,14 +66,16 @@ import frc.robot.subsystems.Drivetrain.RawDriveImpl;
  * project.
  */
 public class Robot extends TitanBot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
+  private static final String k5Ball = "Five Ball Auto";
+  private static final String k4Ball = "Four Ball Auto";
+  private static final String k3Ball = "Three Ball Auto";
+  private static final String k2Ball = "Two Ball Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
   private Drive drive;
   private LogitechDualAction driverPad;
-  private LogitechDualAction operatorPad;
+  private LogitechDualAction operatorPad;  
   private BallPath ballSubsystem;
   private Intake intake;
   private Elevator elevator;
@@ -74,10 +85,10 @@ public class Robot extends TitanBot {
   public static final boolean DEBUG = false;
   double turretEncoderReadingPosition;
   double turretEncoderReadingVelocity;
-  private UsbCamera webcam;
-
+  private boolean set = false;
   private Autonomous auto;
-  // private RelativeEncoder leftEncoder1, leftEncoder2, rightEncoder1, rightEncoder2;
+  AHRS ahrs;
+  public static boolean toggle;
 
 
   @Override
@@ -91,8 +102,11 @@ public class Robot extends TitanBot {
   @Override
   public void robotSetup() {
     System.out.println("Robot setup start");
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
+    m_chooser.setDefaultOption("Five Ball Auto", k5Ball);
+    m_chooser.addOption("Four Ball Auto", k4Ball);
+    m_chooser.addOption("Three Ball Auto", k3Ball);
+    m_chooser.addOption("Two Ball Auto", k2Ball);
+
     SmartDashboard.putData("Auto choices", m_chooser);
 
     // DRIVETRAIN COMPONENTS
@@ -120,6 +134,9 @@ public class Robot extends TitanBot {
     rightControllerFollower.setIdleMode(CANSparkMax.IdleMode.kBrake);
 
     leftControllerPrimary.setInverted(true);
+
+    DigitalInput elevatorBeam = new DigitalInput(0);
+    DigitalInput intakeBeam = new DigitalInput(2);
     
     //SpeedControllerGroup leftSide = new SpeedControllerGroup(leftMotorController1, leftMotorController2);
     //SpeedControllerGroup rightSide = new SpeedControllerGroup(rightMotorController1, rightMotorController2);
@@ -127,40 +144,50 @@ public class Robot extends TitanBot {
     // rightSide.setInverted(true);
     // Encoder leftEncoder = new Encoder(RobotMap.LEFT_ENCODER_PORTS[0], RobotMap.LEFT_ENCODER_PORTS[1], false, Encoder.EncodingType.k2X);
     // Encoder rightEncoder = new Encoder(RobotMap.RIGHT_ENCODER_PORTS[0], RobotMap.RIGHT_ENCODER_PORTS[1], false, Encoder.EncodingType.k2X);
-    RelativeEncoder leftEncoderPrimary = leftControllerPrimary.getEncoder();
-    RelativeEncoder rightEncoderPrimary = rightControllerPrimary.getEncoder();
+    // RelativeEncoder leftEncoderPrimary = leftControllerPrimary.getEncoder();
+    // RelativeEncoder rightEncoderPrimary = rightControllerPrimary.getEncoder();
 
-    final I2C.Port i2cPort = I2C.Port.kOnboard;
+    final I2C.Port i2cPort = I2C.Port.kMXP;
     final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort);
 
     
 
-    this.drive = new RawDriveImpl(leftControllerPrimary, rightControllerPrimary, leftEncoderPrimary, rightEncoderPrimary);
+    this.drive = new RawDriveImpl(leftControllerPrimary, rightControllerPrimary);
 
     // INTAKE COMPONENTS
     WPI_TalonSRX intakeMotorController = new WPI_TalonSRX(RobotMap.INTAKE_TALON_PORT);
-    //ColorSensorV3 leftColorSensor = new ColorSensorV3(RobotMap.LEFT_COLOR_SENSOR_PORT);
-    //ColorSensorV3 rightColorSensor = new ColorSensorV3(RobotMap.RIGHT_COLOR_SENSOR_PORT);
-    Ultrasonic intakeSensor = new Ultrasonic(RobotMap.INTAKE_ULTRASONIC_PORTS[0], RobotMap.INTAKE_ULTRASONIC_PORTS[1]);
-    // intakeSensor.setEnabled(true);
-    this.intake = new IntakeImpl(intakeMotorController, intakeSensor);
+    this.intake = new IntakeImpl(intakeMotorController, intakeBeam);
 
     // SHOOTER COMPONENTS
-    TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
+    CANSparkMax turretMotor = new CANSparkMax(RobotMap.TURRET_PORT, MotorType.kBrushless);
+    turretMotor.restoreFactoryDefaults();
+    turretMotor.setInverted(true);
+    turretMotor.setSmartCurrentLimit(20);
+    // TalonSRX turretMotor = new TalonSRX(RobotMap.TURRET_PORT);
+
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
-    shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 75, 2));
-    shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 40, 50, 4));
-    TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
-    this.shooter = new PIDShooterImpl(turretMotor, shooterMotor, hoodMotor);
+    shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
+    shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
+    // TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
+    CANSparkMax hoodMotor = new CANSparkMax(RobotMap.HOOD_PORT, MotorType.kBrushless);
+    hoodMotor.restoreFactoryDefaults();
+    hoodMotor.setSmartCurrentLimit(20);
+    hoodMotor.setInverted(true);
+    Spark blinkenController = new Spark(8);
+
+    CANSparkMax hoodShooterMotor = new CANSparkMax(RobotMap.HOOD_SHOOTER_PORT, MotorType.kBrushless);
+    hoodShooterMotor.restoreFactoryDefaults();
+    hoodShooterMotor.setSmartCurrentLimit(20);
+    hoodShooterMotor.setInverted(true);
+
+    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
-    Ultrasonic elevatorSensor = new Ultrasonic(RobotMap.ELEVATOR_ULTRASONIC_PORTS[0], RobotMap.ELEVATOR_ULTRASONIC_PORTS[1]);
-    this.elevator = new ElevatorImpl(elevatorMotorController, elevatorSensor, shooter, m_colorSensor);
+    this.elevator = new ElevatorImpl(elevatorMotorController, shooter, m_colorSensor, elevatorBeam);
 
-    // Ultrasonic.setAutomaticMode(true);
-
-    this.ballSubsystem = new BallPathImpl(intake, elevator, shooter);
+    this.ballSubsystem = new BallPathImpl(intake, elevator, shooter,blinkenController);
+    
 
     // Driverpad impl
     this.driverPad = new LogitechDualAction(RobotMap.DRIVER_PAD_PORT);
@@ -168,10 +195,8 @@ public class Robot extends TitanBot {
 
     //this.climberSubsystem = new ClimberImpl();
 
-    this.webcam = CameraServer.startAutomaticCapture();
-    if (!this.webcam.setVideoMode(VideoMode.PixelFormat.kMJPEG, 960, 640, 20)) {
-        System.err.println("Failed to set webcam parameters");
-    }
+    
+    ahrs = new AHRS(SPI.Port.kMXP); 
 
     // register lifecycle components
     registerLifecycleComponent(driverPad);
@@ -194,6 +219,8 @@ public class Robot extends TitanBot {
   @Override
   public void robotPeriodic() {
 
+    // double ticks = ((PIDShooterTrackingImpl) this.shooter).getHoodMotor().getEncoder().getCountsPerRevolution() * ((PIDShooterTrackingImpl) this.shooter).getHoodMotor().getEncoder().getPosition();
+    // SmartDashboard.putNumber("Hooder Encoder Reading", ticks);
   }
 
   /**
@@ -213,12 +240,12 @@ public class Robot extends TitanBot {
     System.out.println("Auto selected: " + m_autoSelected);
 
     driverPad.start();
-    operatorPad.start();
+    // operatorPad.start();
     drive.start();
-    intake.start();
-    elevator.start();
-    shooter.start();
-    ballSubsystem.start();
+    // intake.start();
+    // elevator.start();
+    // shooter.start();
+    // ballSubsystem.start();
 
     auto = new Autonomous(this::waitFor, this.drive, this.ballSubsystem);
   }
@@ -228,51 +255,113 @@ public class Robot extends TitanBot {
    * */
   @Override
   public void autonomousRoutine() throws InterruptedException {
-    drive.resetEncoderTicks();
+
+    double[][] targets = {{0, 0, 0}}; //{38,0, 0}, {89,112, 1}, {155,-29, 0},{-50,0, 1}
+
     switch (m_autoSelected) {
-      case kCustomAuto:
-        double autoDistance = 27;
-        auto.setDriveDistance(autoDistance);
-        auto.prepareToShoot();
-        Timer.delay(1);
-        boolean doneDriving = false;
-        while(!doneDriving){
-          doneDriving = auto.drive(); // Run cycle(drive, intake, elevator, shooter)
-          auto.prepareToShoot();
-          waitFor(20, TimeUnit.MILLISECONDS);
-        }
-        auto.stopDriving();
-        auto.shoot();
-        Timer.delay(4);
-        auto.stop();
+      case k5Ball:
+        targets = new double[][] {
+          {38, 0, 1},
+          {89, 112, 1}, 
+          {155, -29, 0}, 
+          {-50, 0, 1}
+        };
         break;
-      case kDefaultAuto:
+      case k4Ball:
+        targets = new double[][] {
+          {38, 0, 1},
+          {89, 112, 1}, 
+          {155, -29, 0}, 
+          {-50, 0, 1}
+        };
+        break;
+      case k3Ball:
+        targets = new double[][] {
+          {38, 0, 1},
+          {89, 112, 1}
+        };
+        break;
+      case k2Ball:
+        targets = new double[][] {
+          {38, 0, 1}, 
+        };
+        break;
       default:
         // Put default auto code here
         break;
     }
+
+    int index = 0;
+    boolean doneAuto = false;
+    boolean driveDistanceSet = false;
+    boolean hasTurned = false;
+    boolean hasShot = false;
+
+    auto.resetPosition();
+    auto.setOutputRange(0.5);
+
+    while (!doneAuto) {
+      auto.prepareToShoot();
+
+      if (!driveDistanceSet){
+        driveDistanceSet = auto.setDriveDistance(targets[index][0]);
+      }
+  
+      if (!hasTurned && targets[index][1] != 0) { // turn cycle not complete
+        hasTurned = auto.turn(ahrs, targets[index][1]);
+        auto.resetPosition();
+        Timer.delay(1);
+      }
+
+      // if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+      //   hasShot = auto.shoot();
+      //   // Timer.delay(2);
+      //   auto.stopShooting();
+      // } else if (!auto.ballPresent()){
+      //   auto.stopShooting();
+      // }
+
+      if (!auto.atPosition() && targets[index][0] != 0){ // drive cycle not complete 
+        auto.drive();
+        if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+          hasShot = auto.shoot();
+          // Timer.delay(2);
+          auto.stopShooting();
+        } else if (!auto.ballPresent()){
+          Timer.delay(1);
+          auto.stopShooting();
+        }
+      } else { // drive cycle complete
+        Timer.delay(0.5);
+        auto.resetPosition();
+        driveDistanceSet = false;
+        hasTurned = false;
+        hasShot = false;
+        index += 1;
+      }
+
+      if (index == targets.length) { // If auto is complete
+        doneAuto = true;
+      }
+    }
+    auto.stop();
+    auto.setOutputRange(1);
   }
 
+  public boolean getToggle() {
+    return toggle;
+  }
+
+  public void setToggle(boolean t) {
+      this.toggle = t;
+  }
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopSetup() {
     System.out.println("telleop setup");
     JoystickMode deadbandMode = new DeadbandJoystickMode(0.05);
-    this.driverPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS, deadbandMode.andThen(x -> x * .75));
+    this.driverPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS, deadbandMode.andThen(x -> x * .45));
     this.driverPad.setMode(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(deadbandMode));
-    // this.driverPad.bind(ControllerBindings.INTAKE_START, PressType.PRESS, () -> this.ballSubsystem.startIntake());
-    // this.driverPad.bind(ControllerBindings.INTAKE_STOP, PressType.PRESS, () -> this.ballSubsystem.stopIntake());
-    // this.driverPad.bind(ControllerBindings.INTAKE_REVERSE, PressType.PRESS, () -> this.ballSubsystem.reverseIntake());
-
-    // this.driverPad.bind(ControllerBindings.SPIN_UP, PressType.PRESS, () -> this.ballSubsystem.readyToShoot());
-    // this.driverPad.bind(ControllerBindings.SHOOT, PressType.PRESS, () -> this.ballSubsystem.startShooter());
-    // this.driverPad.bind(ControllerBindings.SHOOT, PressType.RELEASE, () -> this.ballSubsystem.stopShooter());
-
-
-    // this.driverPad.bind(ControllerBindings.CLIMBER_EXTEND, PressType.PRESS, () -> this.climberSubsystem.extendOuterClimber());
-    // this.driverPad.bind(ControllerBindings.CLIMBER_RETRACT, PressType.PRESS, () -> this.climberSubsystem.retractOuterClimber());
-    // this.driverPad.bind(ControllerBindings.CLIMBER_ROTATE, PressType.PRESS, () -> this.climberSubsystem.angleOuter(0.0));
-    // this.driverPad.bind(ControllerBindings.CLIMBER_EXTEND, PressType.PRESS, () -> this.ballSubsystem.);
 
     this.operatorPad.bind(ControllerBindings.INTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.INDEX));
     this.operatorPad.bind(ControllerBindings.INTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
@@ -286,29 +375,10 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTGENERAL));
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
 
-    // this.operatorPad.bind(ControllerBindings.DRIVE_REVERSE, PressType.PRESS, () -> reverseDrive = true);
-    // this.operatorPad.bind(ControllerBindings.DRIVE_REVERSE, PressType.RELEASE, () -> reverseDrive = false);
+    this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> 
+    setToggle(!getToggle())
+    );
 
-    // this.operatorPad.bind(ControllerBindings.SHOOT_LAUNCH_CLOSE, PressType.PRESS, () -> this.shooter.resetSensors());
-    // this.operatorPad.bind(ControllerBindings.SHOOT_LAUNCH_CLOSE, PressType.RELEASE, () -> this.shooter.setShotPosition(ShotPosition.NONE));
-
-    // this.operatorPad.bind(ControllerBindings.SHOOT_LAUNCH_FAR, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.NONE/*LAUNCHPAD_FAR*/));
-    // this.operatorPad.bind(ControllerBindings.SHOOT_LAUNCH_FAR, PressType.RELEASE, () -> this.shooter.setShotPosition(ShotPosition.NONE));
-
-    // this.operatorPad.bind(ControllerBindings.SHOOT_TARMAC, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.TEST2));
-    // this.operatorPad.bind(ControllerBindings.SHOOT_TARMAC, PressType.RELEASE, () -> this.shooter.setShotPosition(ShotPosition.NONE));
-    // this.operatorPad.bind(ControllerBindings.RUN_ELEVATOR, PressType.PRESS, () -> this.elevator.setAction(ElevatorAction.RUN));
-    // this.operatorPad.bind(ControllerBindings.RUN_ELEVATOR, PressType.RELEASE, () -> this.elevator.setAction(ElevatorAction.NONE));
-
-    // this.operatorPad.bind(ControllerBindings.SHOOTLAUNCHFAR, pressed -> {
-    //   if (pressed) {
-    //     this.shooter.setShotPosition(ShotPosition.LAUNCHPAD_FAR);
-    //   } else {
-    //     this.shooter.setShotPosition(ShotPosition.NONE);
-    //   }
-    // });
-    // this.operatorPad.bind(ControllerBindings.SHOOTFENDER, PressType.PRESS, () -> this.shooter.setShotPosition(ShotPosition.FENDER));
-    // this.operatorPad.bind(ControllerBindings.SHOOTFENDER, PressType.RELEASE, () -> this.shooter.setShotPosition(ShotPosition.NONE));
 
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
     
@@ -326,27 +396,20 @@ public class Robot extends TitanBot {
   @Override
   public void teleopRoutine() {
       double forward, turn;
-
-
       forward = this.driverPad.getValue(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS);
       turn = this.driverPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS);
 
-      
-      this.drive.drive(forward, turn);
+      this.drive.drive(forward, turn); 
 
-      DpadDirection dpadDirection = angleToDpadDirection(this.operatorPad.getDpad());
-      switch (dpadDirection) {
-          case UP:
-              this.elevator.setAction(ElevatorAction.IN);
-              break;
-          case DOWN:
-              this.elevator.setAction(ElevatorAction.OUT);
-              break;
-          default:
-              this.elevator.setAction(ElevatorAction.NONE);
-              break;
+      if(toggle){
+        this.ballSubsystem.setAction(BallAction.NO_SHOOT);
+        set = false;
+      }else{
+        if(!set){
+          this.ballSubsystem.setAction(BallAction.YES_SHOOT);
+          set = true;
+        }
       }
-      
       }
 
   static DpadDirection angleToDpadDirection(int angle) {

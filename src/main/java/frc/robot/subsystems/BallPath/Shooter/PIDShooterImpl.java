@@ -27,9 +27,9 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     private final TalonFX shooterMotor;
     private final TalonSRX hoodMotor;
 
-    private double kp = 0.00075;
-    private double ki = 0.0000475;
-    private double kd = 0.000044;
+    static final double kp = 0.0026; // 0.00175
+    static final double ki = 0.000005; // 0.00002
+    static final double kd = 0.0001; // 0.00002
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
     private int stallCount = 0;
@@ -53,7 +53,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
 
     private final double hoodBuffer = 10000;
     private final double turretBuffer = 30000;
-    private final double turretSpeed = 0.3;
+    private final double turretSpeed = 0.2;
     private final double hoodSpeed = 0.5;
 
     private final PIDController shooterPid;
@@ -72,12 +72,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     double a2 = y;
     double h2 = 103; // HEIGHT OF TARGET
     double h1 = 35; // HEIGHT OF LIMELIGHT
-
     double heightDif = h2 - h1;
-    
-    
-
-    
 
     public PIDShooterImpl(TalonSRX turretMotor, TalonFX shooterMotor, TalonSRX hoodMotor) {
         super(20, TimeUnit.MILLISECONDS);
@@ -85,7 +80,9 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
         this.shooterMotor = shooterMotor;
         this.hoodMotor = hoodMotor;
         this.shooterPid = new PIDController(kp, ki, kd);
-        this.shooterPid.setTolerance(200, 100);
+        this.shooterPid.setTolerance(50);
+        
+        SmartDashboard.putNumber("Shooter Set Speed", 0);
     }
 
     @Override
@@ -103,20 +100,9 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     public double getSetpointHood(double distance){
         double hoodDif, distDif, difFromUpper, percentToAdd, amountToAdd;
         double returnAmount = 0;
-        // Integer Fender = 100_000;
-        // Integer Tarmac = 230_000;
-        // Integer CloseLaunchPad = 300_000; // pls test
-        // Integer FarLaunchPad = 330_000; // pls test
-        // Integer HumanPlayer = 400_000; // pls test
         double[] distances = {55.0, 153.0, 202.95, 244.77, 305.66};
         int[] hoodValues = {100_000, 230_000, 300_000, 330_000, 400_000};
 
-        // LinkedHashMap<Double, Integer> foundValues = new LinkedHashMap<>();
-        // foundValues.put(55.0, Fender);
-        // foundValues.put(153.0, Tarmac);
-        // foundValues.put(202.95, CloseLaunchPad);
-        // foundValues.put(244.77, FarLaunchPad);
-        // foundValues.put(305.66, HumanPlayer);
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
             if(distance < key){
@@ -133,21 +119,10 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     }
 
     public double getSetpointWheel(Double distance){
-        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd;
+        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
-        // Integer Fender = 3_500;
-        // Integer Tarmac = 5_400;
-        // Integer CloseLaunchPad = 7_000; // pls test
-        // Integer FarLaunchPad = 8_000; // pls test
-        // Integer HumanPlayer = 10_000; // pls test
-        // HashMap<Double, Integer> foundValues = new HashMap<>();
-        // foundValues.put(55.0, Fender);
-        // foundValues.put(153.0, Tarmac);
-        // foundValues.put(202.95, CloseLaunchPad);
-        // foundValues.put(244.77, FarLaunchPad);
-        // foundValues.put(305.66, HumanPlayer);
-        double[] distances = {55.0, 153.0, 202.95, 244.77, 305.66};
-        int[] wheelValues = {3_500, 5_400, 7_000, 8_000, 10_000};
+        double[] distances = {44.0, 113.4, 145.5, 170.8, 220.5};
+        int[] wheelValues = {5_500, 7_500, 9_500, 10_000, 11_000};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -157,7 +132,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 difFromUpper = distances[i] - distance;
                 percentToAdd = difFromUpper / distDif;
                 amountToAdd = percentToAdd * wheelDif;
-                returnAmount = amountToAdd + wheelValues[i-1];
+                returnAmount = wheelValues[i] - amountToAdd;
                 break;
             }
         }
@@ -174,17 +149,17 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
         turretEncoderReadingPosition = this.turretMotor.getSelectedSensorPosition();
         turretEncoderReadingVelocity = this.turretMotor.getSelectedSensorVelocity();
 
-        // SmartDashboard.putNumber("Shooter Encoder reading position", shooterEncoderReadingPosition);
-        // SmartDashboard.putNumber("Shooter Encoder Reading Velocity", shooterEncoderReadingVelocity);
+        SmartDashboard.putNumber("Shooter Encoder reading position", shooterEncoderReadingPosition);
+        SmartDashboard.putNumber("Shooter Encoder Reading Velocity", shooterEncoderReadingVelocity);
         SmartDashboard.putNumber("Turret Encoder Reading Position", turretEncoderReadingPosition);
         SmartDashboard.putNumber("Turret Encoder Reading Velocity", turretEncoderReadingVelocity);
-        // SmartDashboard.putNumber("Turret Hood Encoder reading Position", turretHoodPosition);
-        // SmartDashboard.putNumber("Turret Hood Encoder Reading Velocity", turretHoodVelocity);
+        SmartDashboard.putNumber("Turret Hood Encoder reading Position", turretHoodPosition);
+        SmartDashboard.putNumber("Turret Hood Encoder Reading Velocity", turretHoodVelocity);
 
         switch (this.requestedPosition) {
             case FENDER:
                 setPointHood = 100_000;
-                setPointShooterPID = 3500; 
+                setPointShooterPID = 3000; 
                 setPointRotation = 0;
                 centerUsingLimelight = false;
                 break;
@@ -196,13 +171,13 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 x = tx.getDouble(0.0);
                 y = ty.getDouble(0.0);
                 a = ta.getDouble(0.0);
-                totalAngle = a1+a2;
+                totalAngle = a1+y;
                 totalAngleRadians = Math.toRadians(totalAngle);
                 rs = Math.tan(totalAngleRadians);
                 totalDistance = heightDif / rs;
-                System.out.println(totalDistance);
-                setPointHood = getSetpointHood(totalDistance);
+                setPointHood = 0;
                 setPointShooterPID = getSetpointWheel(totalDistance);
+                setPointShooterPID = 0;
                 break;
             case NONE:
                 centerUsingLimelight = false;
@@ -220,9 +195,15 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 break;
             case TEST:
                 centerUsingLimelight = false;
-                setPointShooterPID = 0;
+                setPointShooterPID = SmartDashboard.getNumber("Shooter Set Speed", 0);
                 setPointHood = 0;
                 setPointRotation = 0;
+                break;
+            case STARTAIM:
+                centerUsingLimelight = true;
+                break;
+            case STOPAIM:
+                centerUsingLimelight = false;
                 break;
             default:
                 break;
@@ -259,6 +240,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
             hoodReady = false;
             stallCount = 0;
         }
+        
 
         if(!centerUsingLimelight){
             if (setPointRotation == Double.NEGATIVE_INFINITY) {
@@ -281,7 +263,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
             }else if(x > 1){
                 turretMotor.set(ControlMode.PercentOutput, turretSpeed);
                 turretReady = false;
-            }else if(x>-1){
+            }else if(x<-1){
                 turretMotor.set(ControlMode.PercentOutput, -turretSpeed);
                 turretReady = false;
             }
@@ -318,12 +300,15 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
         double absoluteWheelSpeed = Math.abs(shooterEncoderReadingVelocity);
         boolean spinningDown = setPointShooterPID == 0 && absoluteWheelSpeed > threshold;
         return spinningUp || spinningDown;
-        // return false;
     }
 
     @Override
     public boolean readyToShoot(){
-        return turretReady && hoodReady && shooterPid.atSetpoint();
+        boolean shooterReady = false;
+        if(Math.abs(shooterEncoderReadingVelocity) > setPointShooterPID - 500 && Math.abs(shooterEncoderReadingVelocity) < shooterEncoderReadingVelocity + 500){
+            shooterReady = true;
+        }
+        return turretReady && shooterReady;
     }
 
     @Override
@@ -360,5 +345,11 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 this.hoodMotor.setSelectedSensorPosition(0);
                 break;
         }
+    }
+
+    @Override
+    public int getBallsShooter() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

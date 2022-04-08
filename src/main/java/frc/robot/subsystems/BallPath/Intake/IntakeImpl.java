@@ -1,6 +1,9 @@
 package frc.robot.subsystems.BallPath.Intake;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
@@ -8,6 +11,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -15,26 +19,31 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
 
     private static final double MOTOR_SPEED = 0.7;
     private static final double PRIMED_DIST_THRESHOLD = 15;
-    private static final int SAMPLE_COUNT = 1;
+    private static final int SAMPLE_COUNT = 11;
 
     private final WPI_TalonSRX intake;
-    private final Ultrasonic intakeSensor;
 
     private volatile IntakeAction action = IntakeAction.NONE;
     private boolean lastPresent = false;
-    private final Queue<Double> sensorSamples;
+    private boolean[] sensorSamples;
+    private DigitalInput beam;
 
-    public IntakeImpl(WPI_TalonSRX intake, Ultrasonic intakeSensor) {
+    private boolean sent = false;
+    private boolean flipped = false;
+    private int ballNumber = 0;
+    List<Boolean> list=new ArrayList<Boolean>(Arrays.asList(new Boolean[4]));
+    
+
+    public IntakeImpl(WPI_TalonSRX intake, DigitalInput beam) {
         super(20, TimeUnit.MILLISECONDS);
         this.intake = intake;
-        this.intakeSensor = intakeSensor;
-        this.sensorSamples = new ArrayDeque<>();
+        this.beam = beam;
     }
 
     @Override
     public void defineResources() {
         require(intake);
-        require(intakeSensor);
+        require(beam);
     }
 
     @Override
@@ -47,20 +56,28 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
         return lastPresent;
     }
 
+    public int getBallsIntake(){
+        return ballNumber;
+    }
+
     @Override
     public void task() throws Exception {
-        double sensorReading = this.intakeSensor.getRangeInches();
-        // SmartDashboard.putNumber("Intake ultrasonic", sensorReading);
-        this.sensorSamples.add(sensorReading);
-        if (sensorSamples.size() > SAMPLE_COUNT) {
-            this.sensorSamples.remove();
+        double trueball = 0;
+        double falseball = 0;
+        boolean sensorReading = this.beam.get();
+        this.list.add(sensorReading);
+        if (list.size() > SAMPLE_COUNT) {
+            this.list.remove(0);
         }
-        double meanReading = 0;
-        for (Double d : sensorSamples) {
-            meanReading += d / sensorSamples.size();
+        for (boolean d : list) {
+            if(d){
+                trueball += 1;
+            }else{
+                falseball += 1;
+            }
         }
 
-        boolean ballPresent = meanReading < PRIMED_DIST_THRESHOLD;
+        boolean noBallPresent = trueball > falseball;
         // boolean stateChanged = ballPresent != lastPresent;
 
         switch (this.action) {
@@ -68,14 +85,14 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
                 this.intake.set(MOTOR_SPEED);
                 break;
             case FEED:
-                if (ballPresent) {
+                if (!noBallPresent) {
                     this.intake.stopMotor();
                 } else {
                     this.intake.set(MOTOR_SPEED);
                 }
                 break;
             case PRIME:
-                if (ballPresent) {
+                if (!noBallPresent) {
                     this.intake.set(MOTOR_SPEED);
                 } else {
                     this.intake.stopMotor();
@@ -85,7 +102,7 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
                 this.intake.set(0);
                 break;
             case REJECT:
-                if (ballPresent) {
+                if (!noBallPresent) {
                     this.intake.set(-MOTOR_SPEED);
                 } else {
                     this.intake.stopMotor();
@@ -96,18 +113,35 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
                 break;
             case IN:
                 this.intake.set(MOTOR_SPEED);
+                if(noBallPresent){
+                    flipped = false;
+                }else{
+                    if(!flipped){
+                        ballNumber += 1;
+                        flipped = true;
+                    }
+                }
                 break;
             case OUT:
                 this.intake.set(-MOTOR_SPEED);
+                if(noBallPresent){
+                    flipped = false;
+                }else{
+                    if(!flipped){
+                        ballNumber -= 1;
+                        flipped = true;
+                    }
+                }
                 break;
             case NONE:
             default:
+                flipped = false;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
                 intake.stopMotor();
                 break;
         }
 
-        lastPresent = ballPresent;
-    }
+        // lastPresent = ballPresent;
+        }
 
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {

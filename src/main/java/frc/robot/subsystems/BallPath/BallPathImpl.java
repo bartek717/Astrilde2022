@@ -2,12 +2,18 @@ package frc.robot.subsystems.BallPath;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.text.DefaultStyledDocument.ElementSpec;
+
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.BallPath.Elevator.Elevator;
+import frc.robot.subsystems.BallPath.Elevator.ElevatorImpl;
 import frc.robot.subsystems.BallPath.Elevator.Elevator.ElevatorAction;
 import frc.robot.subsystems.BallPath.Intake.Intake;
 import frc.robot.subsystems.BallPath.Intake.Intake.IntakeAction;
+import frc.robot.subsystems.BallPath.Shooter.PIDShooterTrackingImpl;
 import frc.robot.subsystems.BallPath.Shooter.Shooter;
 import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 
@@ -16,14 +22,21 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private final Intake intake;
     private final Elevator elevator;
     private final Shooter shooter;
+    private Spark blinkenController;
+    boolean checkBall = false;
+    boolean noShoot = false;
+    private boolean flipped = false;
+    private boolean ballSent = false;
+    int startBall = 1;
 
     private volatile BallAction action = BallAction.NONE;
 
-    public BallPathImpl(Intake intake, Elevator elevator, Shooter shooter) {
+    public BallPathImpl(Intake intake, Elevator elevator, Shooter shooter, Spark blinkenController) {
         super(20, TimeUnit.MILLISECONDS);
         this.intake = intake;
         this.elevator = elevator;
         this.shooter = shooter;
+        this.blinkenController = blinkenController;
     }
 
     @Override
@@ -40,84 +53,77 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void task() {
-        boolean intakeLoaded = this.intake.ballPrimed();
-        boolean elevatorLoaded = this.elevator.ballPrimed();
+        int ballNumber = startBall + intake.getBallsIntake() - shooter.getBallsShooter();
+        SmartDashboard.putNumber("BALL NUMBER", ballNumber);
 
-        // boolean robotEmpty = !intakeLoaded && !elevatorLoaded;
-        // boolean elevatorOnly = elevatorLoaded && !intakeLoaded;
-        // boolean intakeOnly = intakeLoaded && !elevatorLoaded;
-        // boolean full = intakeLoaded && elevatorLoaded;
 
         switch (action) {
-            // case FEED:
-            //     if (robotEmpty) {
-            //         intake.setAction(IntakeAction.FEED);
-            //         elevator.setAction(ElevatorAction.FEED);
-            //         shooter.setShotPosition(ShotPosition.NONE);
-            //     }
-            //     if (elevatorOnly) {
-            //         elevator.setAction(ElevatorAction.NONE);
-            //         intake.setAction(IntakeAction.FEED);
-            //         shooter.setShotPosition(ShotPosition.NONE);
-            //     }
-            //     if (intakeOnly) {
-            //         elevator.setAction(ElevatorAction.FEED);
-            //         intake.setAction(IntakeAction.PRIME);
-            //         shooter.setShotPosition(ShotPosition.NONE);
-            //     }
-            //     if (full) {
-            //         elevator.setAction(ElevatorAction.NONE);
-            //         intake.setAction(IntakeAction.NONE);
-            //         shooter.setShotPosition(ShotPosition.NONE);
-            //     }
-            //     break;
-            // case SHOOT:
-            //     if (robotEmpty) {
-            //         elevator.setAction(ElevatorAction.FEED);
-            //         intake.setAction(IntakeAction.NONE);
-            //         shooter.setShotPosition(ShotPosition.NONE);
-            //     }
-            //     if (elevatorOnly) {
-            //         if (shooter.readyToShoot()) {
-            //             elevator.setAction(ElevatorAction.PRIME);
-            //         }
-            //         intake.setAction(IntakeAction.NONE);
-            //     }
-            //     if (intakeOnly) {
-            //         elevator.setAction(ElevatorAction.PRIME);
-            //         intake.setAction(IntakeAction.PRIME);
-            //     }
-            //     if (full) {
-            //         if(shooter.readyToShoot()){
-            //             elevator.setAction(ElevatorAction.PRIME);
-            //             intake.setAction(IntakeAction.PRIME);
-            //         }
-            //     }
-            //     break;
+            case YES_SHOOT:
+                this.shooter.setShotPosition(ShotPosition.STARTAIM);
+                noShoot = false;
+                break;
+            case NO_SHOOT:
+                this.shooter.setShotPosition(ShotPosition.STOPAIM);
+                noShoot = true;
+                break;
             case SHOOTGENERAL:
                 this.shooter.setShotPosition(ShotPosition.GENERAL);
                 if(shooter.readyToShoot()){
-                    elevator.setAction(ElevatorAction.PRIME);
+                    if (!elevator.ballPrimed()){
+                        elevator.setAction(ElevatorAction.INDEX);
+                    }
+                    else{
+                        elevator.setAction(ElevatorAction.PRIME);
+                    }
                 }else{
-                    elevator.setAction(ElevatorAction.NONE);
+                    elevator.setAction(ElevatorAction.INDEX);
                 }
                 break;
             case SHOOTFENDER:
+                
+                
                 this.shooter.setShotPosition(ShotPosition.FENDER);
-                if(shooter.readyToShoot()){
-                    elevator.setAction(ElevatorAction.PRIME);
+                // if(shooter.readyToShoot()){
+                //     if (!elevator.ballPrimed()){
+                //         elevator.setAction(ElevatorAction.INDEX);
+                //     }else{
+                //         elevator.setAction(ElevatorAction.PRIME);
+                //     }
+                // }else{
+                //     elevator.setAction(ElevatorAction.INDEX);
+                // }
+                
+                if(elevator.ballPrimed() && ballNumber != 0){
+                    if(ballNumber == 2 && !ballSent){
+                        if(shooter.readyToShoot()){
+                            elevator.setAction(ElevatorAction.PRIME);
+                        }
+                    }else if(ballNumber == 2 && ballSent){
+                        elevator.setAction(ElevatorAction.INDEX);
+                    }else if(ballNumber == 1 && shooter.readyToShoot()){
+                        elevator.setAction(ElevatorAction.PRIME);
+                    }
+
+                }else if(ballNumber != 0){
+                    ballSent = true;
+                    elevator.setAction(ElevatorAction.INDEX);
                 }else{
-                    elevator.setAction(ElevatorAction.NONE);
+                    ballSent = false;
                 }
+                
                 break;
             case NONE:
                 this.intake.setAction(IntakeAction.STOP);
                 this.elevator.setAction(ElevatorAction.STOP);
                 this.shooter.setShotPosition(ShotPosition.NONE);
+                checkBall = false;
+                ballSent = false;
+                flipped = false;
                 break;
             case INDEX:
                 this.elevator.setAction(ElevatorAction.INDEX);
                 this.intake.setAction(IntakeAction.IN);
+                checkBall = true;
                 break;
             case OUT:
                 this.elevator.setAction(ElevatorAction.OUT);
@@ -131,7 +137,25 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 intake.setAction(IntakeAction.NONE);
                 elevator.setAction(ElevatorAction.NONE);
                 shooter.setShotPosition(ShotPosition.NONE);
+                ballSent = false;
+                flipped = false;
                 break;
+        }
+
+        if(noShoot){
+            blinkenController.set(-0.89);
+        }else if(checkBall){
+            if(ElevatorImpl.getBall()){
+                blinkenController.set(.83);
+            }else{
+                blinkenController.set(.61);
+            }
+        }else{
+            if(PIDShooterTrackingImpl.canSeeTarget() == 1.0){
+                blinkenController.set(0.77);
+            }else{
+                blinkenController.set(0.61);
+            }
         }
     }
 

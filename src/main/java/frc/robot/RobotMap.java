@@ -30,7 +30,8 @@ public final class RobotMap {
     //public static final int[] CLIMBER_SOLENOID_CHANNELS = {0,0};
 
     public static final int SHOOTER_PORT = 5;
-    public static final int TURRET_PORT = 3;
-    public static final int HOOD_PORT = 4;
+    public static final int TURRET_PORT = 5;
+    public static final int HOOD_PORT = 6;
+    public static final int HOOD_SHOOTER_PORT = 7;
 
 }

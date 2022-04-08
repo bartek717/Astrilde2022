@@ -79,16 +79,16 @@ public class PIDDriveImpl extends RepeatingPooledSubsystem implements Drive {
         rightPIDController.setOutputRange(kMinOutput, kMaxOutput);
         rightPIDController.setSmartMotionAllowedClosedLoopError(setpointThreshold, 0);
 
-        if(Robot.DEBUG){
-        // display PID coefficients on SmartDashboard
-        SmartDashboard.putNumber("P Gain", kP);
-        SmartDashboard.putNumber("I Gain", kI);
-        SmartDashboard.putNumber("D Gain", kD);
-        SmartDashboard.putNumber("I Zone", kIz);
-        SmartDashboard.putNumber("Feed Forward", kFF);
-        SmartDashboard.putNumber("Max Output", kMaxOutput);
-        SmartDashboard.putNumber("Min Output", kMinOutput);
-        }
+        // if(Robot.DEBUG){
+        // // display PID coefficients on SmartDashboard
+        // SmartDashboard.putNumber("P Gain", kP);
+        // SmartDashboard.putNumber("I Gain", kI);
+        // SmartDashboard.putNumber("D Gain", kD);
+        // SmartDashboard.putNumber("I Zone", kIz);
+        // SmartDashboard.putNumber("Feed Forward", kFF);
+        // SmartDashboard.putNumber("Max Output", kMaxOutput);
+        // SmartDashboard.putNumber("Min Output", kMinOutput);
+        // }
         
 
     }
@@ -235,11 +235,6 @@ public class PIDDriveImpl extends RepeatingPooledSubsystem implements Drive {
     }
 
     @Override
-    public double getHeading() {
-        return 0;
-    }
-
-    @Override
     public void resetEncoderTicks() {
         this.leftEncoder.setPosition(0);
         this.rightEncoder.setPosition(0);
@@ -248,6 +243,16 @@ public class PIDDriveImpl extends RepeatingPooledSubsystem implements Drive {
     public void setSetpoint(double leftSetPoint, double rightSetPoint){
        this.leftPIDController.setReference(leftSetPoint, ControlType.kPosition);
        this.rightPIDController.setReference(rightSetPoint, ControlType.kPosition); 
+    }
+
+    @Override
+    public CANSparkMax getLeftSide(){
+      return this.leftSide;
+    }
+
+    @Override
+    public CANSparkMax getRightSide(){
+      return this.rightSide;
     }
     
     @Override

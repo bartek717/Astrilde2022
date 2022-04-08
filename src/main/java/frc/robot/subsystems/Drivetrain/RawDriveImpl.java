@@ -2,14 +2,24 @@ package frc.robot.subsystems.Drivetrain;
 
 import java.util.concurrent.TimeUnit;
 
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
+import com.revrobotics.CANSparkMax.ControlType;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive.WheelSpeeds;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.util.Units;
 
 public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
 
@@ -17,17 +27,46 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
     private CANSparkMax leftSide;
     private CANSparkMax rightSide;
     
+    private SparkMaxPIDController leftPIDController;
+    private SparkMaxPIDController rightPIDController;
     private final RelativeEncoder leftEncoder;
     private final RelativeEncoder rightEncoder;
 
-    public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide, RelativeEncoder leftEncoder, RelativeEncoder rightEncoder) {
-        super(20, TimeUnit.MILLISECONDS);
+    Pose2d pose;
+
+    AHRS gyro = new AHRS(SPI.Port.kMXP);
+
+    private final double alP = 0.108;
+    private final double alI = 0;
+    private final double alD = 0.08;
+
+    private final double arP = 0.16;
+    private final double arI = 0;
+    private final double arD = 0.08;
+
+    public RawDriveImpl(CANSparkMax leftSide, CANSparkMax rightSide) {        super(20, TimeUnit.MILLISECONDS);
         // basic drivetrain stuff
         this.leftSide = leftSide;
         this.rightSide = rightSide;
-        this.leftEncoder = leftEncoder;
-        this.rightEncoder = rightEncoder; 
+        this.leftEncoder = leftSide.getEncoder();
+        this.rightEncoder = rightSide.getEncoder(); 
+
+        // Left PID controller setup
+        this.leftPIDController = this.leftSide.getPIDController();
+        this.leftPIDController.setP(alP);
+        this.leftPIDController.setI(alI);
+        this.leftPIDController.setD(alD);
+
+        // Right PID controller setup
+        this.rightPIDController = this.rightSide.getPIDController();
+        this.rightPIDController.setP(arP);
+        this.rightPIDController.setI(arI);
+        this.rightPIDController.setD(arD);
     }
+
+    DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(Units.inchesToMeters(24.66));
+    DifferentialDriveOdometry odometry = new DifferentialDriveOdometry(getHeading());
+
 
     @Override
     public void defineResources() {
@@ -38,9 +77,21 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
         require(rightEncoder);
     }
 
+    public double lSpeed(){
+      return leftSide.getEncoder().getVelocity()/5*2*Math.PI*Units.inchesToMeters(2)/60;
+    }
+
+    public double rSpeed(){
+      return rightSide.getEncoder().getVelocity()/5*2*Math.PI*Units.inchesToMeters(2)/60;
+    }
+
     @Override
     public void task() throws Exception {
-        // TODO Auto-generated method stub
+        pose = odometry.update(getHeading(), lSpeed(), rSpeed());
+    }
+
+    public Rotation2d getHeading(){
+      return Rotation2d.fromDegrees(-this.gyro.getAngle());
     }
 
     public static WheelSpeeds arcadeDriveIK(double xSpeed, double zRotation, boolean squareInputs) {
@@ -101,15 +152,41 @@ public class RawDriveImpl extends RepeatingPooledSubsystem implements Drive {
       return Pair.of(this.leftEncoder.getPosition(), this.rightEncoder.getPosition());
     }
 
-    @Override
-    public double getHeading() {
-        return 0;
-    }
 
     @Override
     public void resetEncoderTicks() {
         this.leftEncoder.setPosition(0);
         this.rightEncoder.setPosition(0);
+    }
+
+    public void setPosition(double pos) {
+      this.leftPIDController.setReference(pos, ControlType.kPosition);
+      // System.out.println("leftPID Val: " + this.leftEncoder.getPosition());
+      this.rightPIDController.setReference(pos, ControlType.kPosition);
+      // System.out.println("rightPID Val: " + this.rightEncoder.getPosition());
+    }
+
+    public SparkMaxPIDController getLeftPIDController(){
+      return this.leftPIDController;
+    }
+
+    public SparkMaxPIDController getRightPIDController(){
+      return this.rightPIDController;
+    }
+
+    public void setOutputRange(double percent){
+      this.leftPIDController.setOutputRange(-percent, percent);
+      this.rightPIDController.setOutputRange(-percent, percent);
+    }
+
+    @Override
+    public CANSparkMax getLeftSide(){
+      return this.leftSide;
+    }
+
+    @Override
+    public CANSparkMax getRightSide(){
+      return this.rightSide;
     }
     
     @Override

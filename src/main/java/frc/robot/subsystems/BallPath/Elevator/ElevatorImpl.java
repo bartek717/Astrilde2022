@@ -9,6 +9,7 @@ import com.revrobotics.ColorSensorV3;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -17,36 +18,37 @@ import frc.robot.subsystems.BallPath.Shooter.Shooter;
 
 public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
 
-    private static final double MOTOR_SPEED = 0.8;
-    private static final double INDEX_MOTOR_SPEED = 0.30;
+    private static final double MOTOR_SPEED = 0.85;
+    private static final double INDEX_MOTOR_SPEED = 0.25; // 0.35
     private static final double PRIMED_DIST_THRESHOLD = 2;
     private static final int SAMPLE_COUNT = 1;
 
     private final WPI_TalonSRX elevator;
-    private final Ultrasonic sensor;
     private final Shooter shooter;
+    private final DigitalInput beam;
 
     private volatile ElevatorAction action = ElevatorAction.NONE;
     private volatile boolean override = false;
     private boolean lastPresent = false;
-    private final Queue<Double> sensorSamples;
+    // private final Queue<Double> sensorSamples;
     private final ColorSensorV3 elevatorColorSensor;
     boolean ballPresent = false;
-    int detectedColorElevator = 0;
+    static int detectedColorElevator = 0;
+    long count = 0;
+    private boolean detectedBall = false;
 
-    public ElevatorImpl(WPI_TalonSRX elevator, Ultrasonic sensor, Shooter shooter, ColorSensorV3 elevatorColorSensor) {
+    public ElevatorImpl(WPI_TalonSRX elevator, Shooter shooter, ColorSensorV3 elevatorColorSensor, DigitalInput beam) {
         super(20, TimeUnit.MILLISECONDS);
         this.elevatorColorSensor = elevatorColorSensor;
         this.elevator = elevator;
-        this.sensor = sensor;
         this.shooter = shooter;
-        this.sensorSamples = new ArrayDeque<>();
+        this.beam = beam;
     }
 
     @Override
     public void defineResources() {
         require(elevator);
-        require(sensor);
+        require(beam);
         require(shooter);
     }
 
@@ -62,11 +64,17 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
 
     @Override
     public boolean ballPrimed() {
-        return lastPresent;
+        System.out.println(ballPresent);
+        return ballPresent;
+    }
+
+    public static boolean getBall(){
+        return detectedColorElevator == 1 || detectedColorElevator == 2;
     }
 
     @Override
     public void task() throws Exception {
+        Color detectedColor;
 
         // double sensorReading = this.sensor.getRangeInches();
         // // SmartDashboard.putNumber("Elevator Ultrasonic", sensorReading);
@@ -86,55 +94,98 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                 break;
             case AUTO:
                 this.elevator.set(MOTOR_SPEED);
+                ballPresent = false;
                 break;
-            case FEED:
-                if (ballPresent) {
-                    this.elevator.stopMotor();
-                } else {
-                    this.elevator.set(MOTOR_SPEED);
-                }
-                break;
+            // case FEED:
+            //     if (ballPresent) {
+            //         this.elevator.stopMotor();
+            //     } else {
+            //         this.elevator.set(MOTOR_SPEED);
+            //         ballPresent = false;
+            //     }
+            //     break;
             case PRIME:
-                if (ballPresent) {
+                detectedBall = beam.get();
+                // checking for ball
+                // detectedColor = elevatorColorSensor.getColor();
+                // System.out.println(detectedColor.red);
+                // // System.out.println("Elevator: Priming");
+                // if(detectedColor.red > 0.31){
+                //     detectedColorElevator = 1;
+                //     // System.out.println("RED");
+                // }else if(detectedColor.blue > 0.31){
+                //     detectedColorElevator = 2;
+                //     // System.out.println("BLUE");
+                // }else{
+                //     detectedColorElevator = 0;
+                // }
+
+                // if (detectedColorElevator == 1 || detectedColorElevator == 2){
+                //     ballPresent = true;
+                //     this.elevator.set(MOTOR_SPEED);
+                // }else{
+                //     ballPresent = false;
+                //     this.elevator.set(0);
+                // }
+
+                if (!detectedBall){
+                    ballPresent = true;
                     this.elevator.set(MOTOR_SPEED);
-                } else {
-                    this.elevator.stopMotor();
+                }else{
+                    ballPresent = false;
+                    this.elevator.set(0);
                 }
+
                 break;
             case IN:
                 if (override || !shooter.blocking()) {
                     this.elevator.set(MOTOR_SPEED);
+                    ballPresent = false;
                 }
                 break;
             case OUT:
                 this.elevator.set(-MOTOR_SPEED);
+                ballPresent = false;
                 break;
             case RUN:
                 this.elevator.set(MOTOR_SPEED);
+                ballPresent = false;
                 break;
             case INDEX:
-                Color detectedColor = elevatorColorSensor.getColor();
-                SmartDashboard.putNumber("Red", detectedColor.red);
-                SmartDashboard.putNumber("Green", detectedColor.green);
-                SmartDashboard.putNumber("Blue", detectedColor.blue);
-                System.out.println("Elevator Indexing");
-                // boolean stateChanged = ballPresent != lastPresent;
-                if(detectedColor.red > 0.33){
-                    detectedColorElevator = 1;
-                    System.out.println("RED");
-                }else if(detectedColor.blue > 0.32){
-                    detectedColorElevator = 2;
-                    System.out.println("BLUE");
-                }else{
-                    detectedColorElevator = 0;
+                
+                count ++;
+                if (!ballPresent || (count % 10) == 0){
+                    detectedBall = beam.get();
+                    // if(detectedColor.red > 0.31){
+                    //     detectedColorElevator = 1;
+                    // }else if(detectedColor.blue > 0.31){
+                    //     detectedColorElevator = 2;
+                    // }else{
+                    //     detectedColorElevator = 0;
+                    // }
+                    // if (detectedColorElevator == 1 || detectedColorElevator == 2){
+                    //     this.elevator.set(0);
+                    //     ballPresent = true;
+                    //     break;
+                    // }else{
+                    //     this.elevator.set(INDEX_MOTOR_SPEED);
+                    //     ballPresent = false;
+                    //     break;
+                    // }
+
+                    if (!detectedBall){
+                        this.elevator.set(0);
+                        ballPresent = true;
+                        break;
+                    }else{
+                        this.elevator.set(INDEX_MOTOR_SPEED);
+                        ballPresent = false;
+                        break;
+                    }
                 }
-                if (detectedColorElevator == 1 || detectedColorElevator == 2){
+                else{
+                    // System.out.println("Elevator: Indexing, Last had a ball, not checking");
                     this.elevator.set(0);
-                    System.out.println("BALL FOUND " + (detectedColorElevator == 1 ? "RED" : "BLUE"));
-                    break;
-                }else{
-                    System.out.println("RUNNING ELEVATOR");
-                    this.elevator.set(INDEX_MOTOR_SPEED);
                     break;
                 }
 
@@ -143,8 +194,6 @@ public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
                 elevator.stopMotor();
                 break;
         }
-
-        lastPresent = ballPresent;
     }
 
     @Override

@@ -2,35 +2,20 @@ package frc.robot;
 
 // SUBSYSTEM IMPORTS
 import frc.robot.subsystems.BallPath.BallPath.BallAction;
-import frc.robot.subsystems.BallPath.Elevator.Elevator;
-import frc.robot.subsystems.BallPath.Shooter.Shooter;
-import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 import frc.robot.subsystems.BallPath.BallPath;
 import frc.robot.subsystems.Drivetrain.Drive;
+import frc.robot.subsystems.Drivetrain.RawDriveImpl;
 
 import java.util.concurrent.TimeUnit;
 
-import edu.wpi.first.math.Pair;
-
-// PIDCONTROLLER IMPORTS
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Watchdog;
-import frc.robot.subsystems.BallPath.Intake.Intake;
+import com.kauailabs.navx.frc.AHRS;
+import com.revrobotics.CANSparkMax;
 
 public class Autonomous {
-
-    private static final double DRIVE_DIST_TOLERANCE = 3; // TODO determine what this should really be
     
     private Drive drivetrain;
     private BallPath ballPath;
-    private double wheelCircumference = Math.pow((Math.PI*2), 2);
 
-    private double kP = 0.01;
-    private double kI = 0.0025;
-    private double kD = 0.005;
-
-    private double zRotation = 0;
     private double targetDistance;
 
     interface Waiter {
@@ -39,85 +24,109 @@ public class Autonomous {
 
     private final Waiter waiter;
 
-    private final PIDController positionPIDController;
+    private final CANSparkMax leftSide;
+    private final CANSparkMax rightSide;
 
     public Autonomous(Waiter waiter, Drive drivetrain, BallPath ballPath){
         this.waiter = waiter;
         this.drivetrain = drivetrain;
+        this.leftSide = drivetrain.getLeftSide();
+        this.rightSide = drivetrain.getRightSide();
         this.ballPath = ballPath;
-        this.positionPIDController = new PIDController(kP, kI, kD);
-        this.positionPIDController.setTolerance(DRIVE_DIST_TOLERANCE);
     }
 
-    double calcTicks(double encoderTicks){
-        // Calculates ticks per revolution(shaft rotation)
-        double gearRatio = 8;
+    public boolean turn(AHRS gyro, double degree) throws InterruptedException {
+        double target = gyro.getAngle() + degree;
+        double error = target - gyro.getAngle();
+        double kP = 0.005;
+        double tolerance = 2;
 
-        double ticks = encoderTicks / gearRatio * wheelCircumference; // ticksPer cancels so it's just encoderTicks / gearRatio
+        if (degree != 0){
+            while (gyro.getAngle() < target - tolerance || gyro.getAngle() > target + tolerance){
+                Thread.sleep(20);
+                this.leftSide.set(kP * error);
+                this.rightSide.set(-kP * error);
+                error = target - gyro.getAngle();
+                if (Robot.DEBUG){
+                    System.out.println(error);
+                }
+            }
+        }
 
-        return ticks;
+        this.leftSide.set(0);
+        this.rightSide.set(0);
+
+        return true;
     }
 
-    // double convertIT(double distance){
-    //     // Convert Inches to Ticks
-    //     double gearRatio = 8;
-    //     return (distance / wheelCircumference / gearRatio) * 128;
-    // }
-
-    // double convertTI(double ticks){
-    //     // Convert Ticks to Inches
-    //     return ticks * wheelCircumference;
-    // }
-
-    double positionPIDCalc(Double encoderTicks){
-        // PID for both sides
-
-        return positionPIDController.calculate(encoderTicks);
+    public void resetPosition(){
+        this.drivetrain.resetEncoderTicks();
     }
 
-    public void setDriveDistance(double distance) {
-        this.targetDistance = distance;
-        positionPIDController.setSetpoint(this.targetDistance);
+
+    private double convertIR(double inches){
+        double gearRatio = 5;
+        double wheelCircumference = 2 * Math.PI * 2;
+
+        double revs = (inches / wheelCircumference) * gearRatio;
+
+        return revs;
     }
 
-    public boolean drive(){
+    public boolean setDriveDistance(double distance) {
+        this.targetDistance = convertIR(distance);
+        return true;
+    }
+
+    public void drive(){
         /*
         :targetPosition: distance to be driven in inches -> double
         */
+        ((RawDriveImpl) this.drivetrain).setPosition(this.targetDistance);
+    }
 
-        Pair<Double, Double> encoderTicks = this.drivetrain.getEncoderTicks();
+    public boolean atPosition(){
+        boolean arrived = false;
+        double revTolerance = 0.5;
+        double leftSidePos = this.leftSide.getEncoder().getPosition();
+        double rightSidePos = this.rightSide.getEncoder().getPosition();
 
-        double averageEncoderTicks = (encoderTicks.getFirst() + encoderTicks.getSecond()) / 2;
+        if (Robot.DEBUG){
+            System.out.println("LeftSidePos: " + leftSidePos + ", RightSidePos: " + rightSidePos + " Target Pos: " + this.targetDistance);
+        }
+        boolean leftSideArrvied = leftSidePos > this.targetDistance - revTolerance && leftSidePos < this.targetDistance + revTolerance;
+        boolean rightSideArrvied = rightSidePos > this.targetDistance - revTolerance && rightSidePos < this.targetDistance + revTolerance;
+        
+        if (leftSideArrvied && rightSideArrvied) {
+            arrived = true;
+        }
+        
+        return arrived;
+    }
 
-        double nextSpeed = positionPIDCalc(averageEncoderTicks);
+    void setOutputRange(double percent){
+        ((RawDriveImpl) this.drivetrain).setOutputRange(percent);
+    }
 
-        drivetrain.drive(nextSpeed * 0.875 /* fudge it slower */, zRotation);
-
-        return positionPIDController.atSetpoint();
+    boolean ballPresent(){
+        return this.ballPath.getElevator().ballPrimed();
     }
 
     void prepareToShoot(){
-        // boolean intakeLoaded = ballPath.getIntake().ballPrimed();
-        // boolean elevatorLoaded = ballPath.getElevator().ballPrimed();
-        // boolean robotFull = intakeLoaded && elevatorLoaded;
-
-        ballPath.setAction(BallPath.BallAction.AUTO);
-        ballPath.getIntake().setAction(Intake.IntakeAction.AUTO);
-        ballPath.getShooter().setShotPosition(Shooter.ShotPosition.TARMAC);
+        ballPath.setAction(BallAction.INDEX);
     }
 
-    void shoot() throws InterruptedException {
-        ballPath.getElevator().setAction(Elevator.ElevatorAction.AUTO);
+    void stopShooting(){
+        this.ballPath.setAction(BallAction.YES_SHOOT);
     }
 
-    void stopDriving() {
-        drivetrain.drive(0, 0);
+    boolean shoot() {
+        this.ballPath.setAction(BallAction.SHOOTGENERAL);
+        return true;
     }
 
     void stop(){
         this.ballPath.setAction(BallAction.NONE);
-        this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
-        drivetrain.drive(0, 0);
     }
     
 }
