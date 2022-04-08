@@ -32,10 +32,10 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
 
         // Ensure that the time entered is within Endgame to avoid potential accidents.
         if (Timer.getMatchTime() > 120) {
-            this.primaryClimberMotorController.set(speed); 
-
             if (rightClimberMotorControllerPosition > 0 || leftClimberMotorControllerPosition > 0) {
                 this.primaryClimberMotorController.set(0);
+            } else {
+                this.primaryClimberMotorController.set(speed); 
             }
         }
 
@@ -46,41 +46,44 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
     }
 
     // Possibly unnecessary.
-    @Override
-    public void retractOuterClimber(double speed) {
-        if (Timer.getMatchTime() > 120) {
-            this.primaryClimberMotorController.set(-speed);
-            this.followerClimberMotorController.set(-speed);
-        }
+    // @Override
+    // public void retractOuterClimber(double speed) {
+    //     if (Timer.getMatchTime() > 120) {
+    //         this.primaryClimberMotorController.set(-speed);
+    //         this.followerClimberMotorController.set(-speed);
+    //     }
 
-        // long now = System.nanoTime();
-        // if(this.starttime < 0) this.starttime = now;
-        // this.shoulderMotorController.set(1); // test value
-        // if(now > this.starttime + TimeUnit.SECONDS.toNanos(5)) this.shoulderMotorController.set(0);
-    }
+    //     // long now = System.nanoTime();
+    //     // if(this.starttime < 0) this.starttime = now;
+    //     // this.shoulderMotorController.set(1); // test value
+    //     // if(now > this.starttime + TimeUnit.SECONDS.toNanos(5)) this.shoulderMotorController.set(0);
+    // }
 
-    @Override
-    public void angleOuter(double angle) {}
+    // @Override
+    // public void angleOuter(double angle) {}
 
     // The Neo motor controller.
     @Override
     public void extendShoulderLifter(double speed) {
         if (Timer.getMatchTime() > 120) {
-            this.shoulderMotorController.set(speed);
+            // Obtain the shoulderMotorController encoder reading position.
+            double shoulderMotorControllerPosition = shoulderMotorController.getEncoder().getPosition();
 
-            if (shoulderMotorController.getEncoder().getPosition() > 0) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
+            if (shoulderMotorControllerPosition > 0) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
                 this.shoulderMotorController.set(0);
+            } else {
+                this.shoulderMotorController.set(speed);
             }
         }
     }
 
     // Possibly unnecessary.
-    @Override
-    public void retractInnerLifter(double speed) {
-        if (Timer.getMatchTime() > 120) {
-            this.shoulderMotorController.set(-speed);
-        }
-    }
+    // @Override
+    // public void retractInnerLifter(double speed) {
+    //     if (Timer.getMatchTime() > 120) {
+    //         this.shoulderMotorController.set(-speed);
+    //     }
+    // }
 
     @Override
     public void defineResources() {
