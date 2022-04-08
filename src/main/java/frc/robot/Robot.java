@@ -240,12 +240,12 @@ public class Robot extends TitanBot {
     System.out.println("Auto selected: " + m_autoSelected);
 
     driverPad.start();
-    // operatorPad.start();
+    operatorPad.start();
     drive.start();
-    // intake.start();
-    // elevator.start();
-    // shooter.start();
-    // ballSubsystem.start();
+    intake.start();
+    elevator.start();
+    shooter.start();
+    ballSubsystem.start();
 
     auto = new Autonomous(this::waitFor, this.drive, this.ballSubsystem);
   }
