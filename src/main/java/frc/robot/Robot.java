@@ -299,7 +299,7 @@ public class Robot extends TitanBot {
 
     auto.resetPosition();
     auto.setOutputRange(0.5);
-    
+
     while (!doneAuto) {
       auto.prepareToShoot();
 
@@ -328,6 +328,7 @@ public class Robot extends TitanBot {
           // Timer.delay(2);
           auto.stopShooting();
         } else if (!auto.ballPresent()){
+          Timer.delay(1);
           auto.stopShooting();
         }
       } else { // drive cycle complete
