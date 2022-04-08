@@ -298,7 +298,8 @@ public class Robot extends TitanBot {
     boolean hasShot = false;
 
     auto.resetPosition();
-
+    auto.setOutputRange(0.5);
+    
     while (!doneAuto) {
       auto.prepareToShoot();
 
@@ -312,14 +313,23 @@ public class Robot extends TitanBot {
         Timer.delay(1);
       }
 
-      if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
-        hasShot = auto.shoot();
-        Timer.delay(2);
-        auto.stopShooting();
-      }
+      // if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+      //   hasShot = auto.shoot();
+      //   // Timer.delay(2);
+      //   auto.stopShooting();
+      // } else if (!auto.ballPresent()){
+      //   auto.stopShooting();
+      // }
 
       if (!auto.atPosition() && targets[index][0] != 0){ // drive cycle not complete 
         auto.drive();
+        if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+          hasShot = auto.shoot();
+          // Timer.delay(2);
+          auto.stopShooting();
+        } else if (!auto.ballPresent()){
+          auto.stopShooting();
+        }
       } else { // drive cycle complete
         Timer.delay(0.5);
         auto.resetPosition();
@@ -333,9 +343,8 @@ public class Robot extends TitanBot {
         doneAuto = true;
       }
     }
-
     auto.stop();
-
+    auto.setOutputRange(1);
   }
 
   public boolean getToggle() {

@@ -104,6 +104,14 @@ public class Autonomous {
         return arrived;
     }
 
+    void setOutputRange(double percent){
+        ((RawDriveImpl) this.drivetrain).setOutputRange(percent);
+    }
+
+    boolean ballPresent(){
+        return this.ballPath.getElevator().ballPrimed();
+    }
+
     void prepareToShoot(){
         ballPath.setAction(BallAction.INDEX);
     }
