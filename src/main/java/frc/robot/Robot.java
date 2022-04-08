@@ -102,10 +102,10 @@ public class Robot extends TitanBot {
   @Override
   public void robotSetup() {
     System.out.println("Robot setup start");
-    m_chooser.setDefaultOption("Five Ball Auto", k5Ball);
-    m_chooser.addOption("Four Ball Auto", k4Ball);
+    m_chooser.setDefaultOption("Two Ball Auto", k2Ball);
     m_chooser.addOption("Three Ball Auto", k3Ball);
-    m_chooser.addOption("Two Ball Auto", k2Ball);
+    m_chooser.addOption("Four Ball Auto", k4Ball);
+    m_chooser.addOption("Five Ball Auto", k5Ball);
 
     SmartDashboard.putData("Auto choices", m_chooser);
 
@@ -256,38 +256,42 @@ public class Robot extends TitanBot {
   @Override
   public void autonomousRoutine() throws InterruptedException {
 
-    double[][] targets = {{0, 0, 0}}; //{38,0, 0}, {89,112, 1}, {155,-29, 0},{-50,0, 1}
+    double[][] targets; //{38,0, 0}, {89,112, 1}, {155,-29, 1}, {-50,0, 0}, {0, 0, 1}
 
     switch (m_autoSelected) {
       case k5Ball:
         targets = new double[][] {
-          {38, 0, 1},
+          {38, 0, 0},
           {89, 112, 1}, 
-          {155, -29, 0}, 
-          {-50, 0, 1}
+          {155, -29, 1}, 
+          {-50, 0, 0},
+          {0, 0, 1}
         };
         break;
       case k4Ball:
         targets = new double[][] {
-          {38, 0, 1},
+          {38, 0, 0},
           {89, 112, 1}, 
-          {155, -29, 0}, 
-          {-50, 0, 1}
+          {155, -29, 1}, 
+          {-50, 0, 0},
+          {0, 0, 1}
         };
         break;
       case k3Ball:
         targets = new double[][] {
-          {38, 0, 1},
-          {89, 112, 1}
+          {38, 0, 0},
+          {89, 112, 1},
+          {0, 0, 1}
         };
         break;
       case k2Ball:
         targets = new double[][] {
-          {38, 0, 1}, 
+          {38, 0, 0}, 
+          {0, 0, 1}
         };
         break;
       default:
-        // Put default auto code here
+        targets = new double[][] {{0, 0, 0}};
         break;
     }
 
@@ -302,10 +306,6 @@ public class Robot extends TitanBot {
 
     while (!doneAuto) {
       auto.prepareToShoot();
-
-      if (!driveDistanceSet){
-        driveDistanceSet = auto.setDriveDistance(targets[index][0]);
-      }
   
       if (!hasTurned && targets[index][1] != 0) { // turn cycle not complete
         hasTurned = auto.turn(ahrs, targets[index][1]);
@@ -313,25 +313,29 @@ public class Robot extends TitanBot {
         Timer.delay(1);
       }
 
-      // if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
-      //   hasShot = auto.shoot();
-      //   // Timer.delay(2);
-      //   // auto.stopShooting();
-      // } else if (!auto.ballPresent()){
-      //   Timer.delay(1);
-      //   auto.stopShooting();
-      // }
+      if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+        hasShot = auto.shoot();
+        Timer.delay(2);
+        // auto.stopShooting();
+      } else if (!auto.ballPresent()){
+        Timer.delay(1);
+        auto.stopShooting();
+      }
+
+      if (!driveDistanceSet){
+        driveDistanceSet = auto.setDriveDistance(targets[index][0]);
+      }
 
       if (!auto.atPosition() && targets[index][0] != 0){ // drive cycle not complete 
         auto.drive();
-        if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
-          hasShot = auto.shoot();
-          // Timer.delay(2);
-          // auto.stopShooting();
-        } else if (!auto.ballPresent()){
-          Timer.delay(1);
-          auto.stopShooting();
-        }
+        // if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
+        //   hasShot = auto.shoot();
+        //   Timer.delay(2);
+        //   // auto.stopShooting();
+        // } else if (!auto.ballPresent()){
+        //   Timer.delay(1);
+        //   auto.stopShooting();
+        // }
       } else { // drive cycle complete
         Timer.delay(0.5);
         auto.resetPosition();
