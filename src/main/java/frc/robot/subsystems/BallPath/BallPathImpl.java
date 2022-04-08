@@ -28,6 +28,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private boolean flipped = false;
     private boolean ballSent = false;
     int startBall = 1;
+    int readyShootDelay = 0;
 
     private volatile BallAction action = BallAction.NONE;
 
@@ -72,11 +73,15 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                     if (!elevator.ballPrimed()){
                         elevator.setAction(ElevatorAction.INDEX);
                     }
-                    else{
+                    else if (readyShootDelay == 5){
                         elevator.setAction(ElevatorAction.PRIME);
+                    }
+                    else{
+                        readyShootDelay++;
                     }
                 }else{
                     elevator.setAction(ElevatorAction.INDEX);
+                    readyShootDelay=0;
                 }
                 break;
             case SHOOTFENDER:
