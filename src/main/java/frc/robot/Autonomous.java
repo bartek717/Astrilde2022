@@ -2,6 +2,7 @@ package frc.robot;
 
 // SUBSYSTEM IMPORTS
 import frc.robot.subsystems.BallPath.BallPath.BallAction;
+import frc.robot.subsystems.BallPath.Intake.Intake;
 import frc.robot.subsystems.BallPath.BallPath;
 import frc.robot.subsystems.Drivetrain.Drive;
 import frc.robot.subsystems.Drivetrain.RawDriveImpl;
@@ -104,12 +105,17 @@ public class Autonomous {
         return arrived;
     }
 
-    void setOutputRange(double percent){
+    boolean setOutputRange(double percent){
         ((RawDriveImpl) this.drivetrain).setOutputRange(percent);
+        return true;
     }
 
     boolean ballPresent(){
         return this.ballPath.getElevator().ballPrimed();
+    }
+
+    void reverseIntake(){
+        this.ballPath.getIntake().setAction(Intake.IntakeAction.OUT);;
     }
 
     void prepareToShoot(){
