@@ -28,6 +28,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private boolean flipped = false;
     private boolean ballSent = false;
     int startBall = 1;
+    int readyShootDelay = 0;
 
     private volatile BallAction action = BallAction.NONE;
 
@@ -67,40 +68,21 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 noShoot = true;
                 break;
             case SHOOTGENERAL:
-                // this.shooter.setShotPosition(ShotPosition.GENERAL);
-                // if(shooter.readyToShoot()){
-                //     if (!elevator.ballPrimed()){
-                //         elevator.setAction(ElevatorAction.INDEX);
-                //     }
-                //     else{
-                //         elevator.setAction(ElevatorAction.PRIME);
-                //     }
-                // }else{
-                //     elevator.setAction(ElevatorAction.INDEX);
-                // }
-                // this.shooter.setShotPosition(ShotPosition.GENERAL);
-                // if(shooter.readyToShoot()){
-                //     if(!Elevator.getShot()){
-                //         if (!elevator.ballPrimed()){
-                //             elevator.setAction(ElevatorAction.INDEX);
-                //         }
-                //         else{
-                //             elevator.setAction(ElevatorAction.PRIME);
-                //         }
-                //     }else{
-                //         this.intake.setAction(IntakeAction.TESTSHOOT);
-                //         if (!elevator.ballPrimed()){
-                //             elevator.setAction(ElevatorAction.INDEX);
-                //         }
-                //         else{
-                //             elevator.setAction(ElevatorAction.PRIME);
-                //         }
-                //     }
-                    
-                // }else{
-                //     elevator.setAction(ElevatorAction.INDEX);
-                //     this.intake.setAction(IntakeAction.TESTIN);
-                // }
+                this.shooter.setShotPosition(ShotPosition.GENERAL);
+                if(shooter.readyToShoot()){
+                    if (!elevator.ballPrimed()){
+                        elevator.setAction(ElevatorAction.INDEX);
+                    }
+                    else if (readyShootDelay == 5){
+                        elevator.setAction(ElevatorAction.PRIME);
+                    }
+                    else{
+                        readyShootDelay++;
+                    }
+                }else{
+                    elevator.setAction(ElevatorAction.INDEX);
+                    readyShootDelay=0;
+                }
                 break;
             case SHOOTFENDER:
                 
