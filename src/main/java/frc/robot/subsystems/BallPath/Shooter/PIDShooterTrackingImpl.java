@@ -95,7 +95,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     public double hoodShooterMotor_kFF = 0.00009;
     public double hoodShooterMotor_kMaxOutput = 1;
     public double hoodShooterMotor_kMinOutput = -1;
-    
+
     // ### TURRET ROTATION PID ###
     private SparkMaxPIDController turret_PIDController;
     public double turret_kP = 0.14; 
@@ -103,8 +103,8 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     public double turret_kD = 0.07;
     public double turret_kIz = 0;
     public double turret_kFF = 0;
-    public double turret_kMaxOutput = 0.6;
-    public double turret_kMinOutput = -0.6;
+    public double turret_kMaxOutput = 0.7;
+    public double turret_kMinOutput = -0.7;
     // public double turret_kMaxOutputsearch = 0.3;
     // public double turret_kMinOutputsearch = 0.3;
 
@@ -191,7 +191,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         hood_PIDController.setFF(hood_kFF);
         hood_PIDController.setOutputRange(hood_kMinOutput, hood_kMaxOutput);
 
-        // LEDs
+      
        
     }
 
@@ -200,6 +200,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
         require(turretMotor);
         require(shooterMotor);
         require(hoodMotor);
+        require(hoodShooterMotor);
     }
 
     @Override
