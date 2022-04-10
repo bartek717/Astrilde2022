@@ -18,7 +18,7 @@ public final class ControllerBindings {
     public static final LogitechButton SHOOT_FENDER = LogitechButton.A;
     public static final LogitechButton SHOOT_GENERAL = LogitechButton.X;
     public static final LogitechButton SHOOT_LAUNCH_CLOSE = LogitechButton.RIGHT_BUMPER;
-    public static final LogitechButton AIM = LogitechButton.B;
+    // public static final LogitechButton AIM = LogitechButton.B;
     public static final LogitechButton NOT_AIM = LogitechButton.Y;
 
     public static final LogitechButton DRIVE_REVERSE = LogitechButton.LEFT_BUMPER;
@@ -26,4 +26,5 @@ public final class ControllerBindings {
     // Potential climber aspects (not required; one can instead utilize RIGHT_STICK and LEFT_STICK if they prefer in Robot.java).
     public static final LogitechControl CLIMBER = LogitechControl.LEFT_STICK;
     public static final LogitechControl CLIMBER_LIFTER = LogitechControl.RIGHT_STICK;
+    public static final LogitechButton ELEVATOR_IN = LogitechButton.LEFT_BUMPER;
 }

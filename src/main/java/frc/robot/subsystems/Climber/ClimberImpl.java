@@ -8,6 +8,7 @@ import com.revrobotics.CANSparkMax;
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
      
@@ -23,21 +24,10 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
         this.shoulderMotorController = shoulderMotorController;
     }
 
-    // The outer climber refers to the climber arms that the Talons control.
     @Override
-    public void extendOuterClimber(double speed) {
+    public void extendShoulder(double speed) {
         // Read the climber's position.
-        double leftClimberMotorControllerPosition = primaryClimberMotorController.getSelectedSensorPosition();
-        double rightClimberMotorControllerPosition = followerClimberMotorController.getSelectedSensorPosition();
-
-        // Ensure that the time entered is within Endgame to avoid potential accidents.
-        if (Timer.getMatchTime() > 100) {
-            if (rightClimberMotorControllerPosition > 500000 || leftClimberMotorControllerPosition > 500000) {
-                this.primaryClimberMotorController.set(0);
-            } else {
-                this.primaryClimberMotorController.set(speed); 
-            }
-        }
+        this.primaryClimberMotorController.set(speed);
 
         // long now = System.nanoTime();
         // if(this.starttime < 0) this.starttime = now;
@@ -64,17 +54,31 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
 
     // The Neo motor controller.
     @Override
-    public void extendShoulderLifter(double speed) {
-        if (Timer.getMatchTime() > 100) {
-            // Obtain the shoulderMotorController encoder reading position.
-            double shoulderMotorControllerPosition = shoulderMotorController.getEncoder().getPosition();
+    public void extendElbow(double speed) {
+        // if (Timer.getMatchTime() > 100) {
+        // Obtain the shoulderMotorController encoder reading position.
+        double position = this.shoulderMotorController.getEncoder().getPosition();
+        double lowerSoftStop = -3.25;
 
-            if (shoulderMotorControllerPosition > 500000) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
-                this.shoulderMotorController.set(0);
-            } else {
-                this.shoulderMotorController.set(speed);
-            }
+        if (position <= lowerSoftStop && speed < 0) {
+            this.shoulderMotorController.set(0);
+        } else {
+            this.shoulderMotorController.set(speed);
         }
+        // double shoulderMotorControllerPosition = shoulderMotorController.getEncoder().getPosition();
+
+        // if (shoulderMotorControllerPosition > 500000) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
+        //     this.shoulderMotorController.set(0);
+        // } else {
+        // }
+        // }
+    }
+
+    @Override
+    public void resetClimberPosition(){
+        this.shoulderMotorController.getEncoder().setPosition(0);
+        this.primaryClimberMotorController.setSelectedSensorPosition(0);
+        this.followerClimberMotorController.setSelectedSensorPosition(0);
     }
 
     // Possibly unnecessary.
@@ -95,7 +99,12 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
     @Override
     public void task() throws Exception {
         // TODO Auto-generated method stub
-        
+        double leftClimberMotorControllerPosition = primaryClimberMotorController.getSelectedSensorPosition();
+        double rightClimberMotorControllerPosition = followerClimberMotorController.getSelectedSensorPosition();
+        double NEOPosition = this.shoulderMotorController.getEncoder().getPosition();
+        SmartDashboard.putNumber("LEFT CLIMBER ENCODER TICKS", leftClimberMotorControllerPosition);
+        SmartDashboard.putNumber("RIGHT CLIMBER ENCODER TICKS", rightClimberMotorControllerPosition);
+        SmartDashboard.putNumber("NEO CLIMBER ENCODER TICKS", NEOPosition);
     }
 
     @Override

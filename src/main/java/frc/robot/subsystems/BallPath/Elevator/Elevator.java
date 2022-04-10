@@ -11,7 +11,6 @@ public interface Elevator extends Subsystem, LifecycleListener {
     enum ElevatorAction {
         STOP,
         NONE,
-        AUTO,
         PRIME,
         REJECT,
         FEED,

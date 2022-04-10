@@ -24,6 +24,8 @@ public interface BallPath extends Subsystem, LifecycleListener {
         OUT,
         NO_SHOOT,
         YES_SHOOT,
+        SHOOT,
+        STOP_SHOOTING
         ;
     }
 }

@@ -4,61 +4,48 @@
 
 package frc.robot;
 
-import java.sql.Time;
-import java.util.concurrent.TimeUnit;
-
-import com.ctre.phoenix.motorcontrol.FollowerType;
 import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.ColorSensorV3;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ColorSensorV3;
 
 import ca.team3161.lib.robot.TitanBot;
+import ca.team3161.lib.utils.controls.CubedJoystickMode;
 import ca.team3161.lib.utils.controls.DeadbandJoystickMode;
 import ca.team3161.lib.utils.controls.Gamepad.PressType;
 import ca.team3161.lib.utils.controls.InvertedJoystickMode;
 import ca.team3161.lib.utils.controls.JoystickMode;
 import ca.team3161.lib.utils.controls.LogitechDualAction;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
+import ca.team3161.lib.utils.controls.SquaredJoystickMode;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.I2C;
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
-import edu.wpi.first.cscore.VideoMode;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Ultrasonic;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.subsystems.BallPath.BallPath;
-import frc.robot.subsystems.BallPath.BallPathImpl;
 import frc.robot.subsystems.BallPath.BallPath.BallAction;
+import frc.robot.subsystems.BallPath.BallPathImpl;
 import frc.robot.subsystems.BallPath.Elevator.Elevator;
 import frc.robot.subsystems.BallPath.Elevator.Elevator.ElevatorAction;
 import frc.robot.subsystems.BallPath.Elevator.ElevatorImpl;
 import frc.robot.subsystems.BallPath.Intake.Intake;
 import frc.robot.subsystems.BallPath.Intake.Intake.IntakeAction;
 import frc.robot.subsystems.BallPath.Intake.IntakeImpl;
+import frc.robot.subsystems.BallPath.Shooter.BangBangShooterTrackingImpl;
 import frc.robot.subsystems.BallPath.Shooter.Shooter;
 import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
-import frc.robot.subsystems.BallPath.Shooter.PIDShooterImpl;
-import frc.robot.subsystems.BallPath.Shooter.PIDShooterTrackingImpl;
-import frc.robot.subsystems.BallPath.Shooter.RawShooterImpl;
 import frc.robot.subsystems.Climber.Climber;
 import frc.robot.subsystems.Climber.ClimberImpl;
 import frc.robot.subsystems.Drivetrain.Drive;
 import frc.robot.subsystems.Drivetrain.RawDriveImpl;
-import com.kauailabs.navx.frc.AHRS;
-import edu.wpi.first.wpilibj.SPI;
 
 
 /**
@@ -183,7 +170,8 @@ public class Robot extends TitanBot {
     hoodShooterMotor.setSmartCurrentLimit(20);
     hoodShooterMotor.setInverted(true);
 
-    this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
+    // this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
+    this.shooter = new BangBangShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
@@ -206,8 +194,8 @@ public class Robot extends TitanBot {
     followerClimberMotorController.setInverted(InvertType.OpposeMaster);  // Invert the follower?
 
     this.climberSubsystem = new ClimberImpl(primaryClimberMotorController, followerClimberMotorController, shoulderMotorController);
-    System.out.println("CLIMBER" + this.climberSubsystem);
-
+    // System.out.println("CLIMBER" + this.climberSubsystem);
+    this.climberSubsystem.resetClimberPosition();
     ahrs = new AHRS(SPI.Port.kMXP); 
 
     // register lifecycle components
@@ -219,7 +207,7 @@ public class Robot extends TitanBot {
     registerLifecycleComponent(shooter);
     registerLifecycleComponent(ballSubsystem);
     registerLifecycleComponent(climberSubsystem);
-    System.out.println("Robot setup complete");
+    // System.out.println("Robot setup complete");
   }
 
   /**
@@ -300,77 +288,54 @@ public class Robot extends TitanBot {
         break;
       case k2Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0}, 
-          {0, 0, 1, 0, 0}
+          {0, 0, 1, 0},
+          {45, 0, 0, 0},
+          {0, 0, 1, 1}
         };
         break;
       default:
-        targets = new double[][] {{0, 0, 0, 0, 0}};
+        targets = new double[][] {{0, 0, 0, 0}};
         break;
     }
 
     int index = 0;
     boolean doneAuto = false;
-    boolean driveDistanceSet = false;
-    boolean hasTurned = false;
-    boolean hasShot = false;
-    boolean hasLimited = false;
-
-    auto.reverseIntake();
-    Timer.delay(1);
 
     auto.resetPosition();
-    auto.setOutputRange(0.5);
+    auto.setOutputRange(0.7);
 
     while (!doneAuto) {
+      // System.out.println("INDEX: " + index);
       auto.prepareToShoot();
   
-      if (!hasTurned && targets[index][1] != 0) { // turn cycle not complete
-        hasTurned = auto.turn(ahrs, targets[index][1]);
+      if (targets[index][1] != 0) { // turn cycle not complete
+        auto.turn(ahrs, targets[index][1]);
         auto.resetPosition();
         Timer.delay(1);
       }
 
-      if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
-        hasShot = auto.shoot();
-        // while(auto.ballPresent()){
-        //   Timer.delay(1)
-        // }
-        Timer.delay(2);
-        // auto.stopShooting();
-      } else if (!auto.ballPresent()){ // will possibly happen when driving cycle begins
+      if (targets[index][2] != 0){ // shoot cycle not complete
+        if (targets[index][3] == 0){
+          auto.shootFender();
+        } else {
+          auto.shootGeneral();
+        }
+        Timer.delay(5);
         auto.stopShooting();
       }
+      
+      auto.setDriveDistance(targets[index][0]);
+      
 
-      if (!driveDistanceSet){
-        driveDistanceSet = auto.setDriveDistance(targets[index][0]);
-      }
-
-      if (!hasLimited && targets[index][3] != 0) {
-        hasLimited = auto.setOutputRange(targets[index][4]);
-      }
-
-      if (!auto.atPosition() && targets[index][0] != 0){ // drive cycle not complete 
+      while (!auto.atPosition()){ // drive cycle not complete 
         auto.drive();
-        // if (!hasShot && targets[index][2] != 0){ // shoot cycle not complete
-        //   hasShot = auto.shoot();
-        //   Timer.delay(2);
-        //   // auto.stopShooting();
-        // } else if (!auto.ballPresent()){
-        //   Timer.delay(1);
-        //   auto.stopShooting();
-        // }
-      } else { // drive cycle complete
-        Timer.delay(0.5);
-        auto.setOutputRange(0.5);
-        auto.resetPosition();
-        driveDistanceSet = false;
-        hasTurned = false;
-        hasShot = false;
-        hasLimited = false;
-        index += 1;
       }
 
+      auto.resetPosition();
+      auto.setDriveDistance(0);
+      auto.drive();
+      index += 1;
+      
       if (index == targets.length) { // If auto is complete
         doneAuto = true;
       }
@@ -391,7 +356,7 @@ public class Robot extends TitanBot {
   public void teleopSetup() {
     System.out.println("telleop setup");
     JoystickMode deadbandMode = new DeadbandJoystickMode(0.05);
-    this.driverPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS, deadbandMode.andThen(x -> x * .45));
+    this.driverPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS, deadbandMode.andThen(x -> x * 1).andThen(new SquaredJoystickMode()));
     this.driverPad.setMode(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(deadbandMode));
 
     this.operatorPad.bind(ControllerBindings.INTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.INDEX));
@@ -407,13 +372,14 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.SHOOT_GENERAL, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
 
     this.operatorPad.bind(ControllerBindings.NOT_AIM, PressType.PRESS, () -> setToggle(!getToggle()));
-
+    this.operatorPad.bind(ControllerBindings.ELEVATOR_IN, PressType.PRESS, ()-> this.ballSubsystem.setAction(BallAction.SHOOT));
+    this.operatorPad.bind(ControllerBindings.ELEVATOR_IN, PressType.RELEASE, ()-> this.ballSubsystem.setAction(BallAction.STOP_SHOOTING));
 
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
 
     // Testing climber bindings.
-    this.operatorPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.5));  // Not certain as to whether this is correct or not.
-    this.operatorPad.setMode(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(x -> x * 0.5));  // Not certain as to whether this is correct or not.
+    this.operatorPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(new CubedJoystickMode()));
+    this.operatorPad.setMode(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(new CubedJoystickMode()));
     
     driverPad.start();
     operatorPad.start();
@@ -451,10 +417,12 @@ public class Robot extends TitanBot {
       climber = this.operatorPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.Y_AXIS);
       shoulderSpeed = this.operatorPad.getValue(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS);
 
-      System.out.println("PLEASE SEE THIS: " + climber + " " + shoulderSpeed);
+      if (Robot.DEBUG) {
+        System.out.println("PLEASE SEE THIS: " + climber + " " + shoulderSpeed);
+      }
 
-      this.climberSubsystem.extendOuterClimber(climber);
-      this.climberSubsystem.extendShoulderLifter(shoulderSpeed);
+      this.climberSubsystem.extendShoulder(climber);
+      this.climberSubsystem.extendElbow(shoulderSpeed);
     }
 
   static DpadDirection angleToDpadDirection(int angle) {
@@ -477,6 +445,13 @@ public class Robot extends TitanBot {
     shooter.cancel();
     ballSubsystem.cancel();
     climberSubsystem.cancel();
+
+    ballSubsystem.setAction(BallAction.NONE);
+    shooter.setShotPosition(ShotPosition.NONE);
+    elevator.setAction(ElevatorAction.NONE);
+    intake.setAction(IntakeAction.NONE);
+    climberSubsystem.resetClimberPosition();
+    setToggle(false);
   }
 
   /** This function is called periodically when disabled. */
