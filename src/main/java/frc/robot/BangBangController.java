@@ -1,4 +1,4 @@
-package frc;
+package frc.robot;
 
 public class BangBangController extends edu.wpi.first.math.controller.BangBangController {
     

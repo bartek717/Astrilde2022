@@ -16,7 +16,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.BangBangController;
+import frc.robot.BangBangController;
 
 public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem implements Shooter {
     
