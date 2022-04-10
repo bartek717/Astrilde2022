@@ -1,36 +1,24 @@
 
 package frc.robot.subsystems.BallPath.Shooter;
 
-import java.nio.file.spi.FileSystemProvider;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.fasterxml.jackson.databind.ser.std.StdArraySerializers.FloatArraySerializer;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
-import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import ca.team3161.lib.utils.Utils;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.AnalogPotentiometer;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.BangBangController;
 
-
-import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
-
-public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implements Shooter {
+public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem implements Shooter {
     
     private final CANSparkMax turretMotor;
     private final TalonFX shooterMotor;
@@ -38,48 +26,31 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     private final CANSparkMax hoodMotor;
     private final CANSparkMax hoodShooterMotor;
 
-
-    private double kp = PIDShooterImpl.kp; // 0.00175
-    private double ki = PIDShooterImpl.ki; // 0.00002
-    private double kd = PIDShooterImpl.kd; // 0.00002
-
     private double leftLimit = -90.0;
     private double rightLimit = 90.0;
-    private double degreesToTicks = 5555; //  find actual values
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
     private double setPointHood;
-    private double setPointShooterPID;
+    private double setPointShooterFlywheel;
     private double setPointRotation;
 
     private double shooterEncoderReadingPosition;
     private double shooterEncoderReadingVelocity;
     private double hoodAngle;
     private double turretRotation;
-    private double turretHoodVelocity;
-    private double turretEncoderReadingVelocity;
     private RelativeEncoder hoodEncoder;
     private RelativeEncoder turretEncoder;
     private RelativeEncoder hoodShooterMotorEncoder;
-
-    private boolean turretReady = false;
-    private boolean hoodReady = false;
 
     private boolean shoot = false;
     private double currentOutput;
     private boolean flipRight = false;
     private boolean flipLeft = false;
 
-    private final double hoodBuffer = 12500;
-    private final double turretBuffer = 30000;
-    private final double turretSpeed = 0.05;
-    private final double hoodSpeed = 0.5;
     private final double leftLimitLimelight = -0.3;
     private final double rightLimitLimelight = 0.3;
 
-    private boolean shootFender = false;
-
-    private final PIDController shooterPid;
+    private final BangBangController shooterControllerLoop;
     boolean centerUsingLimelight = false;
     boolean aim = true;
     double currentPosition, error;
@@ -87,14 +58,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     int count;
 
     // turret hood motor pif
-    private SparkMaxPIDController hoodShooterMotor_PIDController;
-    public double hoodShooterMotor_kP = 0.00015; 
-    public double hoodShooterMotor_kI = 0.00000;
-    public double hoodShooterMotor_kD = 0.01;
-    public double hoodShooterMotor_kIz = 0;
-    public double hoodShooterMotor_kFF = 0.00009;
-    public double hoodShooterMotor_kMaxOutput = 1;
-    public double hoodShooterMotor_kMinOutput = -1;
+    private final BangBangController hoodWheelControllerLoop;
 
     // ### TURRET ROTATION PID ###
     private SparkMaxPIDController turret_PIDController;
@@ -143,25 +107,17 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     double heightDif = h2 - h1;
     int seen = 0;
     long logItter = 0;
-    private double hoodShooterMotorSpeed = 0;
+    private double setPointHoodShooterWheel = 0;
     int ballsOut = 0;
     boolean flipped = false;
     boolean ramped = false;
  
-    
-
-    public PIDShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor, CANSparkMax hoodShooterMotor) {
+    public BangBangShooterTrackingImpl(CANSparkMax turretMotor, TalonFX shooterMotor, CANSparkMax hoodMotor, CANSparkMax hoodShooterMotor) {
         super(10, TimeUnit.MILLISECONDS);
 
         this.hoodShooterMotor = hoodShooterMotor;
         this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
-        this.hoodShooterMotor_PIDController = hoodShooterMotor.getPIDController();
-        hoodShooterMotor_PIDController.setP(hoodShooterMotor_kP);
-        hoodShooterMotor_PIDController.setI(hoodShooterMotor_kI);
-        hoodShooterMotor_PIDController.setD(hoodShooterMotor_kD);
-        hoodShooterMotor_PIDController.setIZone(hoodShooterMotor_kIz);
-        hoodShooterMotor_PIDController.setFF(hoodShooterMotor_kFF);
-        hoodShooterMotor_PIDController.setOutputRange(hoodShooterMotor_kMinOutput, hoodShooterMotor_kMaxOutput);
+        this.hoodWheelControllerLoop = new BangBangController(1, 500);
 
         // Turret Rotation
         this.turretMotor = turretMotor;
@@ -177,8 +133,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
         // Shooter Wheel
         this.shooterMotor = shooterMotor;
-        this.shooterPid = new PIDController(kp, ki, kd);
-        this.shooterPid.setTolerance(2000); // FIXME tune better so tolerance is tighter
+        this.shooterControllerLoop = new BangBangController(1, 500);
         SmartDashboard.putNumber("Shooter Set Speed", 0);
         // Hood
         this.hoodMotor = hoodMotor;
@@ -314,51 +269,48 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
         switch (this.requestedPosition) {
             case FENDER:
-                shootFender = true;
                 aim = false;
-                setPointShooterPID = 5200; //4700
+                setPointShooterFlywheel = 5200; //4700
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = true;
-                hoodShooterMotorSpeed = 4250; // 4250
+                setPointHoodShooterWheel = 4250; // 4250
                 // System.out.println("FENDER");
                 break;
             case GENERAL:
-                shootFender = false;
                 aim = true;
                 setPointHood = getSetpointHood(totalDistance);
-                setPointShooterPID = getSetpointWheel(totalDistance);
+                setPointShooterFlywheel = getSetpointWheel(totalDistance);
                 shoot = true;
-                hoodShooterMotorSpeed = getSetpointHoodShooter(totalDistance);
+                setPointHoodShooterWheel = getSetpointHoodShooter(totalDistance);
                 // System.out.println("GENERAL");
                 break;
             case STOPAIM:
-                shootFender = false;
                 aim = false;
-                setPointShooterPID = 0;
+                setPointShooterFlywheel = 0;
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = false;
-                hoodShooterMotorSpeed = 0;
+                setPointHoodShooterWheel = 0;
                 // System.out.println("STOPAIM");
                 break;
             case STARTAIM:
                 // System.out.println("STARTAIM");
             default:
                 // System.out.println("DEFAULT");
-                shootFender = false;
                 setPointHood = 0;
                 shoot = false;
-                setPointShooterPID = 0;
-                hoodShooterMotorSpeed = 0;
+                setPointShooterFlywheel = 0;
+                setPointHoodShooterWheel = 0;
                 aim = true;
                 
                 break;
         }
 
-        this.hoodShooterMotor_PIDController.setReference(hoodShooterMotorSpeed, CANSparkMax.ControlType.kVelocity);
-        SmartDashboard.putNumber("Hood SHOOTER CURRENT VELOCITY", hoodShooterMotorEncoder.getVelocity());
-        SmartDashboard.putNumber("Hood SHOOTER CURRRENT SETPOINT", hoodShooterMotorSpeed);
+        double hoodShooterMotorVelocity = hoodShooterMotorEncoder.getVelocity();
+        this.hoodShooterMotor.set(hoodWheelControllerLoop.calculate(hoodShooterMotorVelocity, setPointHoodShooterWheel));
+        SmartDashboard.putNumber("Hood SHOOTER CURRENT VELOCITY", hoodShooterMotorVelocity);
+        SmartDashboard.putNumber("Hood SHOOTER CURRRENT SETPOINT", setPointHoodShooterWheel);
 
         // hood position
         if (setPointHood > hoodEncoder.getPosition() - 1.5 && setPointHood < hoodEncoder.getPosition() + 1.5){
@@ -379,7 +331,6 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
                     // System.out.println("Can see target and in limits");
                     if(x < rightLimitLimelight && x > leftLimitLimelight){
                         SmartDashboard.putNumber("Within limits", 1);
-                        turretReady = true;
                         setPointRotation = turretRotation;
                     }else{
                         setPointRotation = turretRotation + x*conversion;
@@ -457,9 +408,9 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
 
         // shooter wheel
-        if(setPointShooterPID != 0 && shoot){
-            currentOutput = shooterPid.calculate(shooterEncoderReadingVelocity, setPointShooterPID);
-            currentOutput += setPointShooterPID == 0 ? 0 : 0.05; // hack "feed forward"
+        if(setPointShooterFlywheel != 0 && shoot){
+            currentOutput = shooterControllerLoop.calculate(shooterEncoderReadingVelocity, setPointShooterFlywheel);
+            // currentOutput += setPointShooterFlywheel == 0 ? 0 : 0.05; // hack "feed forward"
             currentOutput = Utils.normalizePwm(currentOutput);
         } else {
             currentOutput = 0;
@@ -483,40 +434,17 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
     @Override
     public boolean readyToShoot(){
-        boolean shooterReady = shooterPid.atSetpoint();
+        boolean shooterReady = shooterControllerLoop.atSetpoint();
         boolean turretReady = false;
         boolean hoodReady = false;
-        boolean hoodShooterReady = false;
-        // if(shooterReady){
-        //     System.out.println(shooterEncoderReadingVelocity);
-        // }
+        boolean hoodShooterReady = hoodWheelControllerLoop.atSetpoint();
         if(turretRotation > setPointRotation - 2.5 && turretRotation < setPointRotation + 2.5){
             turretReady = true;
         }
         if(hoodAngle > setPointHood - 1 && hoodAngle < setPointHood + 1){
             hoodReady = true;
         }
-        if(hoodShooterMotorEncoder.getVelocity() > hoodShooterMotorSpeed - 500 && hoodShooterMotorEncoder.getVelocity() < hoodShooterMotorSpeed + 500){
-            hoodShooterReady = true;
-
-        }
-        // System.out.println(hoodShooterMotorEncoder.getVelocity());
-        // System.out.println(hoodAngle);
-        // System.out.println(setPointHood);
-        System.out.println(turretReady + " " + shooterReady + " " + hoodReady + " " + hoodShooterReady);
-        // if(shooterReady && !ramped && !flipped){
-        //     ramped = true;
-        //     flipped = false;
-        //     System.out.println(ramped + " " + flipped);
-        // }else{
-        //     if(!flipped && ramped){
-        //         ballsOut += 1;
-        //         flipped = true;
-        //         ramped = false;
-        //     }
-        // }
         return turretReady && shooterReady && hoodReady && hoodShooterReady;
-        
     }
 
     public int getBallsShooter(){

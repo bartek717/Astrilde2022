@@ -28,6 +28,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private boolean flipped = false;
     private boolean ballSent = false;
     int startBall = 1;
+    int readyShootDelay = 0;
 
     private volatile BallAction action = BallAction.NONE;
 
@@ -41,9 +42,9 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void defineResources(){
-        // require(intake);
-        // require(elevator);
-        // require(shooter);
+        require(intake);
+        require(elevator);
+        require(shooter);
     }
 
     @Override
@@ -53,8 +54,8 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void task() {
-        int ballNumber = startBall + intake.getBallsIntake() - shooter.getBallsShooter();
-        SmartDashboard.putNumber("BALL NUMBER", ballNumber);
+        // int ballNumber = startBall + intake.getBallsIntake() - shooter.getBallsShooter();
+        // SmartDashboard.putNumber("BALL NUMBER", ballNumber);
 
 
         switch (action) {
@@ -69,66 +70,60 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
             case SHOOTGENERAL:
                 this.shooter.setShotPosition(ShotPosition.GENERAL);
                 if(shooter.readyToShoot()){
-                    if (!elevator.ballPrimed()){
-                        elevator.setAction(ElevatorAction.INDEX);
-                    }
-                    else{
-                        elevator.setAction(ElevatorAction.PRIME);
+                    if (elevator.ballPrimed()){
+                        elevator.setAction(ElevatorAction.RUN);
+                    }else{
+                        intake.setAction(IntakeAction.IN);
                     }
                 }else{
                     elevator.setAction(ElevatorAction.INDEX);
                 }
                 break;
             case SHOOTFENDER:
-                
-                
                 this.shooter.setShotPosition(ShotPosition.FENDER);
-                // if(shooter.readyToShoot()){
-                //     if (!elevator.ballPrimed()){
-                //         elevator.setAction(ElevatorAction.INDEX);
-                //     }else{
-                //         elevator.setAction(ElevatorAction.PRIME);
-                //     }
-                // }else{
-                //     elevator.setAction(ElevatorAction.INDEX);
-                // }
-                
-                if(elevator.ballPrimed() && ballNumber != 0){
-                    if(ballNumber == 2 && !ballSent){
-                        if(shooter.readyToShoot()){
-                            elevator.setAction(ElevatorAction.PRIME);
-                        }
-                    }else if(ballNumber == 2 && ballSent){
-                        elevator.setAction(ElevatorAction.INDEX);
-                    }else if(ballNumber == 1 && shooter.readyToShoot()){
-                        elevator.setAction(ElevatorAction.PRIME);
+                if(shooter.readyToShoot()){
+                    if (elevator.ballPrimed()){
+                        elevator.setAction(ElevatorAction.RUN);
+                    }else{
+                        intake.setAction(IntakeAction.IN);
                     }
-
-                }else if(ballNumber != 0){
-                    ballSent = true;
-                    elevator.setAction(ElevatorAction.INDEX);
                 }else{
-                    ballSent = false;
+                    elevator.setAction(ElevatorAction.INDEX);
                 }
                 
                 break;
             case NONE:
                 this.intake.setAction(IntakeAction.STOP);
                 this.elevator.setAction(ElevatorAction.STOP);
-                this.shooter.setShotPosition(ShotPosition.NONE);
+                this.shooter.setShotPosition(ShotPosition.STARTAIM);
                 checkBall = false;
                 ballSent = false;
                 flipped = false;
                 break;
             case INDEX:
-                this.elevator.setAction(ElevatorAction.INDEX);
-                this.intake.setAction(IntakeAction.IN);
+                if (this.elevator.ballPrimed()){
+                    this.intake.setAction(IntakeAction.IN);
+                    if(this.intake.ballPrimed()){
+                        this.intake.setAction(IntakeAction.STOP);
+                    }
+                } else{
+                    this.elevator.setAction(ElevatorAction.INDEX);
+                    this.intake.setAction(IntakeAction.IN);
+                }
+                
                 checkBall = true;
                 break;
             case OUT:
                 this.elevator.setAction(ElevatorAction.OUT);
                 this.intake.setAction(IntakeAction.OUT);
                 break;
+            case SHOOT:
+                if(this.shooter.readyToShoot()){
+                    this.elevator.setAction(ElevatorAction.RUN);
+                }
+                break;
+            case STOP_SHOOTING:
+            this.elevator.setAction(ElevatorAction.NONE);
             case AUTO:
             case MANUAL:
                 break;
@@ -143,18 +138,30 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
         }
 
         if(noShoot){
-            blinkenController.set(-0.89);
+            blinkenController.set(-0.89); // rainbow with glitter
         }else if(checkBall){
-            if(ElevatorImpl.getBall()){
-                blinkenController.set(.83);
+            if(elevator.ballPrimed()){
+                blinkenController.set(.83); // sky blue
             }else{
-                blinkenController.set(.61);
+                blinkenController.set(.61); //red
             }
         }else{
-            if(PIDShooterTrackingImpl.canSeeTarget() == 1.0){
-                blinkenController.set(0.77);
-            }else{
-                blinkenController.set(0.61);
+            if (action.equals(BallAction.SHOOTFENDER)) {
+                if (shooter.readyToShoot()){
+                    blinkenController.set(-0.05); // strobe white
+                }  else{
+                    blinkenController.set(0.81); // lawn green
+                }
+            } else {
+                if(PIDShooterTrackingImpl.canSeeTarget() == 1.0){
+                    if (shooter.readyToShoot()){
+                        blinkenController.set(-0.05); // strobe white
+                    }  else{
+                        blinkenController.set(0.77); // green
+                    }
+                }else{
+                    blinkenController.set(0.61); // red
+                }
             }
         }
     }

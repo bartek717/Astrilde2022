@@ -83,7 +83,7 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
                 setPointHood = 100_000;
                 setPointShooter = 0.35; // tbd
                 setPointRotation = 100000;
-                System.out.println("USING THE RAW SHOOTER IMPL");
+                // System.out.println("USING THE RAW SHOOTER IMPL");
                 break;
             case LAUNCHPAD_CLOSE:
                 setPointHood = 0; // to be decided
@@ -110,7 +110,7 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
                 setPointRotation = 100000;
                 setPointShooter = 0;
                 setPointHood = 0;
-                System.out.println("Setting shot position");
+                // System.out.println("Setting shot position");
                 break;
             default:
                 break;
@@ -155,17 +155,6 @@ public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter 
 
     @Override
     public void getDistance(double ty, double angle1, double angle2){}
-
-    @Override
-    public boolean blocking() {
-        boolean spinningUp = setPointShooter > 0 && Math.abs(shooterEncoderReadingVelocity) < 7000; // this 7000 should correspond to the ShotPosition
-        // threshold to allow for a little bit of sensor movement around 0, not requiring absolute stillness
-        double threshold = 500;
-        double absoluteWheelSpeed = Math.abs(shooterEncoderReadingVelocity);
-        boolean spinningDown = setPointShooter == 0 && absoluteWheelSpeed > threshold;
-        return spinningUp || spinningDown;
-        // return false;
-    }
 
     @Override
     public boolean readyToShoot(){

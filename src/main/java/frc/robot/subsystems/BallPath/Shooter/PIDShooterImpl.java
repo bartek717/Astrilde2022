@@ -27,9 +27,9 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     private final TalonFX shooterMotor;
     private final TalonSRX hoodMotor;
 
-    static final double kp = 0.0026; // 0.00175
-    static final double ki = 0.000005; // 0.00002
-    static final double kd = 0.0001; // 0.00002
+    static final double kp = 0.001; // 0.00175
+    static final double ki = 0; // 0.000005
+    static final double kd = 0; // 0.0002
 
     private volatile ShotPosition requestedPosition = ShotPosition.NONE;
     private int stallCount = 0;
@@ -180,7 +180,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
                 setPointShooterPID = 0;
                 break;
             case NONE:
-                centerUsingLimelight = false;
+                centerUsingLimelight = true;
                 setPointShooterPID = 0;
                 setPointHood = 0;
                 setPointRotation = 0;
@@ -210,7 +210,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
         }
 
         double hoodCurrent = hoodMotor.getStatorCurrent();
-        System.out.println("hood setpoint: " + setPointHood + ", current: " + hoodCurrent);
+        // System.out.println("hood setpoint: " + setPointHood + ", current: " + hoodCurrent);
         if (setPointHood == Double.NEGATIVE_INFINITY) {
             hoodMotor.set(ControlMode.PercentOutput, 0);
             hoodReady = false;
@@ -291,16 +291,6 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
 
     @Override
     public void getDistance(double ty, double angle1, double angle2){}
-
-    @Override
-    public boolean blocking() {
-        boolean spinningUp = setPointShooterPID > 0 && !shooterPid.atSetpoint();
-        // threshold to allow for a little bit of sensor movement around 0, not requiring absolute stillness
-        double threshold = 500;
-        double absoluteWheelSpeed = Math.abs(shooterEncoderReadingVelocity);
-        boolean spinningDown = setPointShooterPID == 0 && absoluteWheelSpeed > threshold;
-        return spinningUp || spinningDown;
-    }
 
     @Override
     public boolean readyToShoot(){

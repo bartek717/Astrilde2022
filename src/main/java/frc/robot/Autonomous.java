@@ -2,6 +2,8 @@ package frc.robot;
 
 // SUBSYSTEM IMPORTS
 import frc.robot.subsystems.BallPath.BallPath.BallAction;
+import frc.robot.subsystems.BallPath.Intake.Intake;
+import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 import frc.robot.subsystems.BallPath.BallPath;
 import frc.robot.subsystems.Drivetrain.Drive;
 import frc.robot.subsystems.Drivetrain.RawDriveImpl;
@@ -87,7 +89,7 @@ public class Autonomous {
 
     public boolean atPosition(){
         boolean arrived = false;
-        double revTolerance = 0.5;
+        double revTolerance = 2;
         double leftSidePos = this.leftSide.getEncoder().getPosition();
         double rightSidePos = this.rightSide.getEncoder().getPosition();
 
@@ -104,12 +106,17 @@ public class Autonomous {
         return arrived;
     }
 
-    void setOutputRange(double percent){
+    boolean setOutputRange(double percent){
         ((RawDriveImpl) this.drivetrain).setOutputRange(percent);
+        return true;
     }
 
     boolean ballPresent(){
         return this.ballPath.getElevator().ballPrimed();
+    }
+
+    void reverseIntake(){
+        this.ballPath.getIntake().setAction(Intake.IntakeAction.OUT);;
     }
 
     void prepareToShoot(){
@@ -117,12 +124,16 @@ public class Autonomous {
     }
 
     void stopShooting(){
-        this.ballPath.setAction(BallAction.YES_SHOOT);
+        this.ballPath.setAction(BallAction.STOP_SHOOTING);
+        // this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
     }
 
-    boolean shoot() {
+    void shootGeneral(){
         this.ballPath.setAction(BallAction.SHOOTGENERAL);
-        return true;
+    }
+
+    void shootFender() {
+        this.ballPath.setAction(BallAction.SHOOTFENDER);
     }
 
     void stop(){
