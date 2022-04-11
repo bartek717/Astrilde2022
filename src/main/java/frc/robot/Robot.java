@@ -65,8 +65,8 @@ public class Robot extends TitanBot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
   private Drive drive;
-  private LogitechDualAction driverPad;
-  private LogitechDualAction operatorPad;  
+  private XBoxOneController driverPad;
+  private XBoxOneController operatorPad;  
   private BallPath ballSubsystem;
   private Intake intake;
   private Elevator elevator;
@@ -183,8 +183,8 @@ public class Robot extends TitanBot {
     
 
     // Driverpad impl
-    this.driverPad = new LogitechDualAction(RobotMap.DRIVER_PAD_PORT);
-    this.operatorPad = new LogitechDualAction(RobotMap.OPERATOR_PAD_PORT);
+    this.driverPad = new XBoxOneController(RobotMap.DRIVER_PAD_PORT);
+    this.operatorPad = new XBoxOneController(RobotMap.OPERATOR_PAD_PORT);
 
     // CLIMBER COMPONENTS.
     WPI_TalonSRX primaryClimberMotorController = new WPI_TalonSRX(RobotMap.CLIMBER_TALON_PORTS[0]); 
@@ -199,6 +199,8 @@ public class Robot extends TitanBot {
     // System.out.println("CLIMBER" + this.climberSubsystem);
     this.climberSubsystem.resetClimberPosition();
     ahrs = new AHRS(SPI.Port.kMXP); 
+
+    HIDTester hidTester = new HIDTester(2);
 
     // register lifecycle components
     registerLifecycleComponent(driverPad);
