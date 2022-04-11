@@ -20,17 +20,10 @@ public class Autonomous {
 
     private double targetDistance;
 
-    interface Waiter {
-        void waitFor(long delay, TimeUnit unit) throws InterruptedException;
-    }
-
-    private final Waiter waiter;
-
     private final CANSparkMax leftSide;
     private final CANSparkMax rightSide;
 
-    public Autonomous(Waiter waiter, Drive drivetrain, BallPath ballPath){
-        this.waiter = waiter;
+    public Autonomous(Drive drivetrain, BallPath ballPath){
         this.drivetrain = drivetrain;
         this.leftSide = drivetrain.getLeftSide();
         this.rightSide = drivetrain.getRightSide();
@@ -45,7 +38,7 @@ public class Autonomous {
 
         if (degree != 0){
             while (gyro.getAngle() < target - tolerance || gyro.getAngle() > target + tolerance){
-                Thread.sleep(20);
+                // Thread.sleep(20);
                 this.leftSide.set(kP * error);
                 this.rightSide.set(-kP * error);
                 error = target - gyro.getAngle();

@@ -253,7 +253,7 @@ public class Robot extends TitanBot {
     shooter.start();
     ballSubsystem.start();
 
-    auto = new Autonomous(this::waitFor, this.drive, this.ballSubsystem);
+    auto = new Autonomous(this.drive, this.ballSubsystem);
   }
 
   /** This function is called periodically during autonomous. 
@@ -315,7 +315,6 @@ public class Robot extends TitanBot {
       if (targets[index][1] != 0) { // turn cycle not complete
         auto.turn(ahrs, targets[index][1]);
         auto.resetPosition();
-        Timer.delay(1);
       }
 
       if (targets[index][2] != 0){ // shoot cycle not complete
