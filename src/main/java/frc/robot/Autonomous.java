@@ -124,7 +124,7 @@ public class Autonomous {
     }
 
     void stopShooting(){
-        this.ballPath.setAction(BallAction.STOP_SHOOTING);
+        this.ballPath.setAction(BallAction.NONE);
         // this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
     }
 

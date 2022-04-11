@@ -265,33 +265,32 @@ public class Robot extends TitanBot {
     switch (m_autoSelected) {
       case k5Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0},
-          {89, 112, 1, 0, 0}, 
-          {155, -29, 1, 0, 0}, 
-          {-50, 0, 0, 0, 0},
-          {0, 0, 1, 0, 0}
+          {38, 0, 0, 0},
+          {89, 112, 1, 1}, 
+          {155, -29, 1, 1}, 
+          {-50, 0, 0, 0},
+          {0, 0, 1, 1}
         };
         break;
       case k4Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0},
-          {89, 112, 1, 0, 0}, 
-          {155, -29, 1, 0, 0}, 
-          {-50, 0, 0, 0, 0},
-          {0, 0, 1, 0, 0}
+          {38, 0, 0, 0},
+          {89, 112, 1, 1}, 
+          {155, -29, 1, 1}, 
+          {-50, 0, 0, 0},
+          {0, 0, 1, 1}
         };
         break;
       case k3Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0},
-          {89, 112, 1, 0, 0},
-          {0, 0, 1, 0, 0}
+          {38, 0, 0, 0},
+          {89, 112, 1, 1}, 
+          {0, 0, 1, 1}
         };
         break;
       case k2Ball:
         targets = new double[][] {
-          {0, 0, 1, 0},
-          {45, 0, 0, 0},
+          {38, 0, 0, 0},
           {0, 0, 1, 1}
         };
         break;
@@ -322,15 +321,18 @@ public class Robot extends TitanBot {
         } else {
           auto.shootGeneral();
         }
-        Timer.delay(5);
-        auto.stopShooting();
       }
       
       auto.setDriveDistance(targets[index][0]);
       
 
       while (!auto.atPosition()){ // drive cycle not complete 
-        auto.drive();
+        if (!auto.ballPresent()){
+          auto.stopShooting();
+        }
+        if(ballSubsystem.getAction().equals(BallAction.NONE)){
+          auto.drive();
+        }
       }
 
       auto.resetPosition();

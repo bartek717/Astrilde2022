@@ -45,6 +45,10 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     }
 
     @Override
+    public BallAction getAction(){
+        return this.action;
+    }
+    @Override
     public void setAction(BallAction inputAction) {
         this.action = inputAction;
     }

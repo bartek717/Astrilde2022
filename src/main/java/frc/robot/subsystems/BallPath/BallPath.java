@@ -8,6 +8,7 @@ import frc.robot.subsystems.BallPath.Shooter.Shooter;
 
 public interface BallPath extends Subsystem, LifecycleListener {
     void setAction(BallAction action);
+    BallAction getAction();
     Intake getIntake();
     Shooter getShooter();
     Elevator getElevator();
