@@ -38,7 +38,7 @@ public class Autonomous {
 
         if (degree != 0){
             while (gyro.getAngle() < target - tolerance || gyro.getAngle() > target + tolerance){
-                // Thread.sleep(20);
+                Thread.sleep(20);
                 this.leftSide.set(kP * error);
                 this.rightSide.set(-kP * error);
                 error = target - gyro.getAngle();

@@ -49,7 +49,9 @@ public class XBoxOneController extends AbstractController {
      */
     public enum XBoxOneControl implements Control {
         LEFT_STICK(0),
-        RIGHT_STICK(1);
+        RIGHT_STICK(1),
+        LEFT_TRIGGER(7),
+        RIGHT_TRIGGER(8);
 
         private final int id;
 
@@ -76,8 +78,6 @@ public class XBoxOneController extends AbstractController {
         RIGHT_STICK_CLICK(12),
         LEFT_BUMPER(5),
         RIGHT_BUMPER(6),
-        LEFT_TRIGGER(7),
-        RIGHT_TRIGGER(8),
         SELECT(9),
         START(10);
 
