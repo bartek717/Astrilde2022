@@ -14,6 +14,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.ColorSensorV3;
 
+import ca.team3161.lib.robot.BlinkinLEDController;
 import ca.team3161.lib.robot.TitanBot;
 import ca.team3161.lib.utils.controls.CubedJoystickMode;
 import ca.team3161.lib.utils.controls.DeadbandJoystickMode;
@@ -163,7 +164,8 @@ public class Robot extends TitanBot {
     hoodMotor.restoreFactoryDefaults();
     hoodMotor.setSmartCurrentLimit(20);
     hoodMotor.setInverted(true);
-    Spark blinkenController = new Spark(8);
+
+    BlinkinLEDController blinkenController = new BlinkinLEDController(8);
 
     CANSparkMax hoodShooterMotor = new CANSparkMax(RobotMap.HOOD_SHOOTER_PORT, MotorType.kBrushless);
     hoodShooterMotor.restoreFactoryDefaults();

@@ -2,14 +2,11 @@ package frc.robot.subsystems.BallPath;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.text.DefaultStyledDocument.ElementSpec;
-
+import ca.team3161.lib.robot.BlinkinLEDController;
+import ca.team3161.lib.robot.BlinkinLEDController.Pattern;
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.BallPath.Elevator.Elevator;
-import frc.robot.subsystems.BallPath.Elevator.ElevatorImpl;
 import frc.robot.subsystems.BallPath.Elevator.Elevator.ElevatorAction;
 import frc.robot.subsystems.BallPath.Intake.Intake;
 import frc.robot.subsystems.BallPath.Intake.Intake.IntakeAction;
@@ -22,7 +19,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private final Intake intake;
     private final Elevator elevator;
     private final Shooter shooter;
-    private Spark blinkenController;
+    private BlinkinLEDController blinkenController;
     boolean checkBall = false;
     boolean noShoot = false;
     private boolean flipped = false;
@@ -32,7 +29,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     private volatile BallAction action = BallAction.NONE;
 
-    public BallPathImpl(Intake intake, Elevator elevator, Shooter shooter, Spark blinkenController) {
+    public BallPathImpl(Intake intake, Elevator elevator, Shooter shooter, BlinkinLEDController blinkenController) {
         super(20, TimeUnit.MILLISECONDS);
         this.intake = intake;
         this.elevator = elevator;
@@ -138,29 +135,29 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
         }
 
         if(noShoot){
-            blinkenController.set(-0.89); // rainbow with glitter
+            blinkenController.setLEDPattern(Pattern.RAINBOW_GLITTER);
         }else if(checkBall){
             if(elevator.ballPrimed()){
-                blinkenController.set(.83); // sky blue
+                blinkenController.setLEDPattern(Pattern.SOLID_SKY_BLUE);
             }else{
-                blinkenController.set(.61); //red
+                blinkenController.setLEDPattern(Pattern.SOLID_RED);
             }
         }else{
             if (action.equals(BallAction.SHOOTFENDER)) {
                 if (shooter.readyToShoot()){
-                    blinkenController.set(-0.05); // strobe white
+                    blinkenController.setLEDPattern(Pattern.STROBE_WHITE);
                 }  else{
-                    blinkenController.set(0.81); // lawn green
+                    blinkenController.setLEDPattern(Pattern.SOLID_AQUA);
                 }
             } else {
                 if(PIDShooterTrackingImpl.canSeeTarget() == 1.0){
                     if (shooter.readyToShoot()){
-                        blinkenController.set(-0.05); // strobe white
+                        blinkenController.setLEDPattern(Pattern.STROBE_WHITE);
                     }  else{
-                        blinkenController.set(0.77); // green
+                        blinkenController.setLEDPattern(Pattern.SOLID_GREEN);
                     }
                 }else{
-                    blinkenController.set(0.61); // red
+                    blinkenController.setLEDPattern(Pattern.SOLID_RED);
                 }
             }
         }
@@ -174,11 +171,13 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
             case ON_TELEOP:
             case ON_TEST:
                 this.start();
+                this.blinkenController.start();
                 break;
             case ON_DISABLED:
             case NONE:
             default:
                 this.cancel();
+                this.blinkenController.cancel();
                 break;
         }
     }
