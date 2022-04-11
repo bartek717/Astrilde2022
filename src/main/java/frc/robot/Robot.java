@@ -200,7 +200,8 @@ public class Robot extends TitanBot {
     this.climberSubsystem.resetClimberPosition();
     ahrs = new AHRS(SPI.Port.kMXP); 
 
-    HIDTester hidTester = new HIDTester(2);
+    HIDTester driverHIDTester = new HIDTester(RobotMap.DRIVER_PAD_PORT);
+    // HIDTester operatorHIDTester = new HIDTester(RobotMap.OPERATOR_PAD_PORT);
 
     // register lifecycle components
     registerLifecycleComponent(driverPad);
