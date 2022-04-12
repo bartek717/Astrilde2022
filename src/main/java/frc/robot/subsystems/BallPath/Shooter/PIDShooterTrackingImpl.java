@@ -316,11 +316,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 5200; //4700
+                setPointShooterPID = 7000; //4700
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = true;
-                hoodShooterMotorSpeed = 4250; // 4250
+                hoodShooterMotorSpeed = 9000; // 4250
                 // System.out.println("FENDER");
                 break;
             case GENERAL:

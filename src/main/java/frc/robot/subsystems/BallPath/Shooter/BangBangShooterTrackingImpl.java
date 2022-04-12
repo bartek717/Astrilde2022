@@ -117,7 +117,7 @@ public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem i
 
         this.hoodShooterMotor = hoodShooterMotor;
         this.hoodShooterMotorEncoder = hoodShooterMotor.getEncoder();
-        this.hoodWheelControllerLoop = new BangBangController(1, 500);
+        this.hoodWheelControllerLoop = new BangBangController(0.4, 500);
 
         // Turret Rotation
         this.turretMotor = turretMotor;
@@ -133,7 +133,7 @@ public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem i
 
         // Shooter Wheel
         this.shooterMotor = shooterMotor;
-        this.shooterControllerLoop = new BangBangController(1, 500);
+        this.shooterControllerLoop = new BangBangController(0.45, 500);
         SmartDashboard.putNumber("Shooter Set Speed", 0);
         // Hood
         this.hoodMotor = hoodMotor;
@@ -189,7 +189,7 @@ public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem i
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
-        double[] wheelValues = {2000, 7000,  8000, 9000, 10000, 10500};
+        double[] wheelValues = {4000, 4500,  4500, 4500, 4500, 4500};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -210,7 +210,7 @@ public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem i
         double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
-        int[] wheelValues = {5_500, 5_700,  5_900, 6_100, 8_500, 9_700};
+        int[] wheelValues = {5_500, 6_100,  6_500, 7_500, 8_500, 9_700};
     
         for (int i = 1; i < distances.length; i++) {
             double key = distances[i];
@@ -270,11 +270,11 @@ public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem i
         switch (this.requestedPosition) {
             case FENDER:
                 aim = false;
-                setPointShooterFlywheel = 5200; //4700
+                setPointShooterFlywheel = 4700; //4700
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = true;
-                setPointHoodShooterWheel = 4250; // 4250
+                setPointHoodShooterWheel = 4200; // 4250
                 // System.out.println("FENDER");
                 break;
             case GENERAL:

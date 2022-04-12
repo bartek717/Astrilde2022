@@ -19,6 +19,7 @@ public final class ControllerBindings {
     public static final LogitechButton SHOOT_GENERAL = LogitechButton.X;
     public static final LogitechButton SHOOT_LAUNCH_CLOSE = LogitechButton.RIGHT_BUMPER;
     // public static final LogitechButton AIM = LogitechButton.B;
+    public static final LogitechButton DEPLOY_CLIMBER = LogitechButton.B;
     public static final LogitechButton NOT_AIM = LogitechButton.Y;
 
     public static final LogitechButton DRIVE_REVERSE = LogitechButton.LEFT_BUMPER;

@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.InvertType;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
@@ -13,6 +14,7 @@ import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.ColorSensorV3;
+import com.revrobotics.CANSparkMax.IdleMode;
 
 import ca.team3161.lib.robot.BlinkinLEDController;
 import ca.team3161.lib.robot.TitanBot;
@@ -159,6 +161,8 @@ public class Robot extends TitanBot {
     TalonFX shooterMotor = new TalonFX(RobotMap.SHOOTER_PORT);
     shooterMotor.configStatorCurrentLimit(new StatorCurrentLimitConfiguration(true, 40, 50, 1));
     shooterMotor.configSupplyCurrentLimit(new SupplyCurrentLimitConfiguration(true, 38, 45, 0.5));
+    shooterMotor.setNeutralMode(NeutralMode.Coast);
+
     // TalonSRX hoodMotor = new TalonSRX(RobotMap.HOOD_PORT);
     CANSparkMax hoodMotor = new CANSparkMax(RobotMap.HOOD_PORT, MotorType.kBrushless);
     hoodMotor.restoreFactoryDefaults();
@@ -171,6 +175,7 @@ public class Robot extends TitanBot {
     hoodShooterMotor.restoreFactoryDefaults();
     hoodShooterMotor.setSmartCurrentLimit(20);
     hoodShooterMotor.setInverted(true);
+    hoodShooterMotor.setIdleMode(IdleMode.kCoast);
 
     // this.shooter = new PIDShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
     this.shooter = new BangBangShooterTrackingImpl(turretMotor, shooterMotor, hoodMotor, hoodShooterMotor);
@@ -377,6 +382,8 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.ELEVATOR_IN, PressType.PRESS, ()-> this.ballSubsystem.setAction(BallAction.SHOOT));
     this.operatorPad.bind(ControllerBindings.ELEVATOR_IN, PressType.RELEASE, ()-> this.ballSubsystem.setAction(BallAction.STOP_SHOOTING));
 
+    this.operatorPad.bind(ControllerBindings.DEPLOY_CLIMBER, PressType.PRESS, ()-> this.climberSubsystem.primeClimber());
+    this.operatorPad.bind(ControllerBindings.DEPLOY_CLIMBER, PressType.RELEASE, () -> this.climberSubsystem.none());
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
 
     // Testing climber bindings.

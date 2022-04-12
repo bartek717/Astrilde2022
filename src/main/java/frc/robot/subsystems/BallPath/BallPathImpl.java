@@ -119,6 +119,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                     this.elevator.setAction(ElevatorAction.RUN);
                 }
                 break;
+
             case STOP_SHOOTING:
             this.elevator.setAction(ElevatorAction.NONE);
             case AUTO:
