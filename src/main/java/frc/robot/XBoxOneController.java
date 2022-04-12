@@ -37,6 +37,7 @@ import java.util.function.Function;
 import ca.team3161.lib.utils.Utils;
 import ca.team3161.lib.utils.controls.AbstractController;
 import ca.team3161.lib.utils.controls.LinearJoystickMode;
+// import ca.team3161.lib.utils.controls.LogitechDualAction.LogitechControl;
 import ca.team3161.lib.utils.controls.Gamepad;
 
 /**
@@ -50,8 +51,8 @@ public class XBoxOneController extends AbstractController {
     public enum XBoxOneControl implements Control {
         LEFT_STICK(0),
         RIGHT_STICK(1),
-        LEFT_TRIGGER(7),
-        RIGHT_TRIGGER(8);
+        LEFT_TRIGGER(2),
+        RIGHT_TRIGGER(3);
 
         private final int id;
 
@@ -62,34 +63,21 @@ public class XBoxOneController extends AbstractController {
         @Override
         public int getIdentifier(final Axis axis) {
             Objects.requireNonNull(axis);
-            return id * XBoxOneControl.values().length + axis.getIdentifier();
-        }
-    }
+            if(this.id == 0 && axis.equals(XBoxOneAxis.X)){
+                return 0;
+            }
+            if(this.id == 0 && axis.equals(XBoxOneAxis.Y)){
+                return 1;
+            }
+            if(this.id == 1 && axis.equals(XBoxOneAxis.X)){
+                return 4;
+            }
+            if(this.id == 1 && axis.equals(XBoxOneAxis.Y)){
+                return 5;
+            }
 
-    /**
-     * {@inheritDoc}.
-     */
-    public enum XBoxOneButton implements Button {
-        A(2),
-        B(3),
-        X(1),
-        Y(4),
-        LEFT_STICK_CLICK(11),
-        RIGHT_STICK_CLICK(12),
-        LEFT_BUMPER(5),
-        RIGHT_BUMPER(6),
-        SELECT(9),
-        START(10);
-
-        private final int id;
-
-        XBoxOneButton(final int id) {
-            this.id = id;
-        }
-
-        @Override
-        public int getIdentifier() {
             return this.id;
+            // return id * XBoxOneControl.values().length + axis.getIdentifier();
         }
     }
 
@@ -98,7 +86,9 @@ public class XBoxOneController extends AbstractController {
      */
     public enum XBoxOneAxis implements Axis {
         X(0),
-        Y(1);
+        Y(1),
+        LEFT_TRIGGER_AXIS(2),
+        RIGHT_TRIGGER_AXIS(3);
 
         private final int id;
 
@@ -109,6 +99,33 @@ public class XBoxOneController extends AbstractController {
         @Override
         public int getIdentifier() {
             return id;
+        }
+    }
+
+    /**
+     * {@inheritDoc}.
+     */
+    public enum XBoxOneButton implements Button {
+        A(1),
+        B(2),
+        X(3),
+        Y(4),
+        LEFT_BUMPER(5),
+        RIGHT_BUMPER(6),
+        START(7),
+        SELECT(8),
+        LEFT_STICK_CLICK(9),
+        RIGHT_STICK_CLICK(10);
+
+        private final int id;
+
+        XBoxOneButton(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int getIdentifier() {
+            return this.id;
         }
     }
 
@@ -281,5 +298,4 @@ public class XBoxOneController extends AbstractController {
         validate(binding, "Gamepad on port " + this.port + " hasBinding() called with invalid binding " + binding);
         return buttonBindings.containsKey(binding);
     }
-
 }

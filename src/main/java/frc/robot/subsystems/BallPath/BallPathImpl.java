@@ -147,7 +147,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 blinkenController.setLEDPattern(Pattern.SOLID_RED);
             }
         }else{
-            if (action.equals(BallAction.SHOOTFENDER)) {
+            if (action.equals(BallAction.SHOOTFENDER) || action.equals(BallAction.SHOOTGENERAL)) {
                 if (shooter.readyToShoot()){
                     blinkenController.setLEDPattern(Pattern.STROBE_WHITE);
                 }  else{
