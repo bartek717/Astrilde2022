@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class ElevatorImpl extends RepeatingPooledSubsystem implements Elevator {
 
     private static final double MOTOR_SPEED = 1;
-    private static final double INDEX_MOTOR_SPEED = 0.35; // 0.35
+    private static final double INDEX_MOTOR_SPEED = 1; // 0.35
 
     private final WPI_TalonSRX elevator;
     private static DigitalInput beam;

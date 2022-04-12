@@ -12,24 +12,18 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.ColorSensorV3;
 
 import ca.team3161.lib.robot.BlinkinLEDController;
 import ca.team3161.lib.robot.TitanBot;
 import ca.team3161.lib.utils.controls.CubedJoystickMode;
 import ca.team3161.lib.utils.controls.DeadbandJoystickMode;
-import ca.team3161.lib.utils.controls.Gamepad.Control;
 import ca.team3161.lib.utils.controls.Gamepad.PressType;
 import ca.team3161.lib.utils.controls.InvertedJoystickMode;
 import ca.team3161.lib.utils.controls.JoystickMode;
-import ca.team3161.lib.utils.controls.LogitechDualAction;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
 import ca.team3161.lib.utils.controls.SquaredJoystickMode;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.BallPath.BallPath;
@@ -73,7 +67,6 @@ public class Robot extends TitanBot {
   private Elevator elevator;
   private Shooter shooter;
   private Climber climberSubsystem;
-  private boolean reverseDrive = false;
   public static final boolean DEBUG = false;
   double turretEncoderReadingPosition;
   double turretEncoderReadingVelocity;
@@ -339,7 +332,7 @@ public class Robot extends TitanBot {
   }
 
   public void setToggle(boolean t) {
-      this.toggle = t;
+      toggle = t;
   }
   /** This function is called once when teleop is enabled. */
   @Override
@@ -413,8 +406,8 @@ public class Robot extends TitanBot {
         System.out.println("PLEASE SEE THIS: " + climber + " " + shoulderSpeed);
       }
 
-      this.climberSubsystem.extendShoulder(climber);
-      this.climberSubsystem.extendElbow(shoulderSpeed);
+      this.climberSubsystem.extendElbow(climber);
+      this.climberSubsystem.extendShoulder(shoulderSpeed);
     }
 
   static DpadDirection angleToDpadDirection(int angle) {

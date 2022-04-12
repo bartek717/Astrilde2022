@@ -298,10 +298,10 @@ public class BangBangShooterTrackingImpl extends RepeatingIndependentSubsystem i
                 // System.out.println("STARTAIM");
             default:
                 // System.out.println("DEFAULT");
-                setPointHood = getSetpointHood(totalDistance);
+                setPointHood = 0; // getSetpointHood(totalDistance);
                 shoot = false;
-                setPointShooterFlywheel = 4000; // TODO change to optimal value
-                setPointHoodShooterWheel = 3000; // TODO change to optimal value
+                setPointShooterFlywheel = 0; // 4000; // TODO change to optimal value
+                setPointHoodShooterWheel = 0; // 3000; // TODO change to optimal value
                 aim = true;
                 
                 break;

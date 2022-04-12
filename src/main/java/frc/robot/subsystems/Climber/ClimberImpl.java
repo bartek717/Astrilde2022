@@ -7,7 +7,6 @@ import com.revrobotics.CANSparkMax;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
@@ -25,53 +24,15 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
     }
 
     @Override
-    public void extendShoulder(double speed) {
+    public void extendElbow(double speed) {
         // Read the climber's position.
         this.primaryClimberMotorController.set(speed);
-
-        // long now = System.nanoTime();
-        // if(this.starttime < 0) this.starttime = now;
-        //     this.shoulderMotorController.set(1); // test value
-        // if(now > this.starttime + TimeUnit.SECONDS.toNanos(5)) this.shoulderMotorController.set(0);
     }
-
-    // Possibly unnecessary.
-    // @Override
-    // public void retractOuterClimber(double speed) {
-    //     if (Timer.getMatchTime() > 120) {
-    //         this.primaryClimberMotorController.set(-speed);
-    //         this.followerClimberMotorController.set(-speed);
-    //     }
-
-    //     // long now = System.nanoTime();
-    //     // if(this.starttime < 0) this.starttime = now;
-    //     // this.shoulderMotorController.set(1); // test value
-    //     // if(now > this.starttime + TimeUnit.SECONDS.toNanos(5)) this.shoulderMotorController.set(0);
-    // }
-
-    // @Override
-    // public void angleOuter(double angle) {}
 
     // The Neo motor controller.
     @Override
-    public void extendElbow(double speed) {
-        // if (Timer.getMatchTime() > 100) {
-        // Obtain the shoulderMotorController encoder reading position.
-        double position = this.shoulderMotorController.getEncoder().getPosition();
-        double lowerSoftStop = -3.25;
-
-        if (position <= lowerSoftStop && speed < 0) {
-            this.shoulderMotorController.set(0);
-        } else {
-            this.shoulderMotorController.set(speed);
-        }
-        // double shoulderMotorControllerPosition = shoulderMotorController.getEncoder().getPosition();
-
-        // if (shoulderMotorControllerPosition > 500000) {  // Utilize some value in place of 0. Test this by logging the encoder position values to the SmartDashboard and set an appropriate value.
-        //     this.shoulderMotorController.set(0);
-        // } else {
-        // }
-        // }
+    public void extendShoulder(double speed) {
+        this.shoulderMotorController.set(speed);
     }
 
     @Override
@@ -80,14 +41,6 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
         this.primaryClimberMotorController.setSelectedSensorPosition(0);
         this.followerClimberMotorController.setSelectedSensorPosition(0);
     }
-
-    // Possibly unnecessary.
-    // @Override
-    // public void retractInnerLifter(double speed) {
-    //     if (Timer.getMatchTime() > 120) {
-    //         this.shoulderMotorController.set(-speed);
-    //     }
-    // }
 
     @Override
     public void defineResources() {
