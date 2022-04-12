@@ -45,6 +45,10 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     }
 
     @Override
+    public BallAction getAction(){
+        return this.action;
+    }
+    @Override
     public void setAction(BallAction inputAction) {
         this.action = inputAction;
     }
@@ -143,7 +147,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 blinkenController.setLEDPattern(Pattern.SOLID_RED);
             }
         }else{
-            if (action.equals(BallAction.SHOOTFENDER)) {
+            if (action.equals(BallAction.SHOOTFENDER) || action.equals(BallAction.SHOOTGENERAL)) {
                 if (shooter.readyToShoot()){
                     blinkenController.setLEDPattern(Pattern.STROBE_WHITE);
                 }  else{

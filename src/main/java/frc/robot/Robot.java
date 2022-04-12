@@ -18,6 +18,7 @@ import ca.team3161.lib.robot.BlinkinLEDController;
 import ca.team3161.lib.robot.TitanBot;
 import ca.team3161.lib.utils.controls.CubedJoystickMode;
 import ca.team3161.lib.utils.controls.DeadbandJoystickMode;
+import ca.team3161.lib.utils.controls.Gamepad.Control;
 import ca.team3161.lib.utils.controls.Gamepad.PressType;
 import ca.team3161.lib.utils.controls.InvertedJoystickMode;
 import ca.team3161.lib.utils.controls.JoystickMode;
@@ -65,8 +66,8 @@ public class Robot extends TitanBot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
   private Drive drive;
-  private LogitechDualAction driverPad;
-  private LogitechDualAction operatorPad;  
+  private XBoxOneController driverPad;
+  private XBoxOneController operatorPad;  
   private BallPath ballSubsystem;
   private Intake intake;
   private Elevator elevator;
@@ -183,8 +184,8 @@ public class Robot extends TitanBot {
     
 
     // Driverpad impl
-    this.driverPad = new LogitechDualAction(RobotMap.DRIVER_PAD_PORT);
-    this.operatorPad = new LogitechDualAction(RobotMap.OPERATOR_PAD_PORT);
+    this.driverPad = new XBoxOneController(RobotMap.DRIVER_PAD_PORT);
+    this.operatorPad = new XBoxOneController(RobotMap.OPERATOR_PAD_PORT);
 
     // CLIMBER COMPONENTS.
     WPI_TalonSRX primaryClimberMotorController = new WPI_TalonSRX(RobotMap.CLIMBER_TALON_PORTS[0]); 
@@ -250,7 +251,7 @@ public class Robot extends TitanBot {
     shooter.start();
     ballSubsystem.start();
 
-    auto = new Autonomous(this::waitFor, this.drive, this.ballSubsystem);
+    auto = new Autonomous(this.drive, this.ballSubsystem);
   }
 
   /** This function is called periodically during autonomous. 
@@ -265,33 +266,32 @@ public class Robot extends TitanBot {
     switch (m_autoSelected) {
       case k5Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0},
-          {89, 112, 1, 0, 0}, 
-          {155, -29, 1, 0, 0}, 
-          {-50, 0, 0, 0, 0},
-          {0, 0, 1, 0, 0}
+          {38, 0, 0, 0},
+          {89, 112, 1, 1}, 
+          {155, -29, 1, 1}, 
+          {-50, 0, 0, 0},
+          {0, 0, 1, 1}
         };
         break;
       case k4Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0},
-          {89, 112, 1, 0, 0}, 
-          {155, -29, 1, 0, 0}, 
-          {-50, 0, 0, 0, 0},
-          {0, 0, 1, 0, 0}
+          {38, 0, 0, 0},
+          {89, 112, 1, 1}, 
+          {155, -29, 1, 1}, 
+          {-50, 0, 0, 0},
+          {0, 0, 1, 1}
         };
         break;
       case k3Ball:
         targets = new double[][] {
-          {38, 0, 0, 0, 0},
-          {89, 112, 1, 0, 0},
-          {0, 0, 1, 0, 0}
+          {38, 0, 0, 0},
+          {89, 112, 1, 1}, 
+          {0, 0, 1, 1}
         };
         break;
       case k2Ball:
         targets = new double[][] {
-          {0, 0, 1, 0},
-          {45, 0, 0, 0},
+          {38, 0, 0, 0},
           {0, 0, 1, 1}
         };
         break;
@@ -313,7 +313,6 @@ public class Robot extends TitanBot {
       if (targets[index][1] != 0) { // turn cycle not complete
         auto.turn(ahrs, targets[index][1]);
         auto.resetPosition();
-        Timer.delay(1);
       }
 
       if (targets[index][2] != 0){ // shoot cycle not complete
@@ -322,15 +321,18 @@ public class Robot extends TitanBot {
         } else {
           auto.shootGeneral();
         }
-        Timer.delay(5);
-        auto.stopShooting();
       }
       
       auto.setDriveDistance(targets[index][0]);
       
 
       while (!auto.atPosition()){ // drive cycle not complete 
-        auto.drive();
+        if (!auto.ballPresent()){
+          auto.stopShooting();
+        }
+        if(ballSubsystem.getAction().equals(BallAction.NONE)){
+          auto.drive();
+        }
       }
 
       auto.resetPosition();
@@ -361,10 +363,6 @@ public class Robot extends TitanBot {
     this.driverPad.setMode(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS, deadbandMode.andThen(x -> x * 1).andThen(new SquaredJoystickMode()));
     this.driverPad.setMode(ControllerBindings.RIGHT_STICK, ControllerBindings.Y_AXIS, new InvertedJoystickMode().andThen(deadbandMode));
 
-    this.operatorPad.bind(ControllerBindings.INTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.INDEX));
-    this.operatorPad.bind(ControllerBindings.INTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
-    this.operatorPad.bind(ControllerBindings.OUTTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.OUT));
-    this.operatorPad.bind(ControllerBindings.OUTTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
     this.operatorPad.bind(ControllerBindings.OVERRIDE_ELEVATOR_GATE, this.elevator::setGateOverride);
 
     this.operatorPad.bind(ControllerBindings.SHOOT_FENDER, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.SHOOTFENDER));
@@ -402,6 +400,25 @@ public class Robot extends TitanBot {
       turn = this.driverPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS);
 
       this.drive.drive(forward, turn); 
+
+      double intake, outake;
+      
+      intake = this.operatorPad.getValue(ControllerBindings.INTAKE, ControllerBindings.LEFT_TRIGGER_AXIS);
+      outake = this.operatorPad.getValue(ControllerBindings.OUTTAKE, ControllerBindings.RIGHT_TRIGGER_AXIS);
+
+      // Intake
+      if (intake > 0.9){
+        this.ballSubsystem.setAction(BallAction.INDEX);
+      } else{
+        this.ballSubsystem.setAction(BallAction.NONE);
+      }
+
+      if (outake > 0.9){
+        this.ballSubsystem.setAction(BallAction.OUT);
+      } else {
+        this.ballSubsystem.setAction(BallAction.NONE);
+      }
+
 
       // Ballpath.
       if(toggle){

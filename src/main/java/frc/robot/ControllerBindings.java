@@ -1,30 +1,36 @@
 package frc.robot;
 
-import ca.team3161.lib.utils.controls.LogitechDualAction.LogitechButton;
-import ca.team3161.lib.utils.controls.LogitechDualAction.LogitechControl;
-import ca.team3161.lib.utils.controls.LogitechDualAction.LogitechAxis;
+// import ca.team3161.lib.utils.controls.LogitechDualAction.XBoxOneButton;
+// import ca.team3161.lib.utils.controls.LogitechDualAction.XboxXBoxOneControl;
+// import ca.team3161.lib.utils.controls.LogitechDualAction.XBoxOneAxis;
+import frc.robot.XBoxOneController.XBoxOneAxis;
+import frc.robot.XBoxOneController.XBoxOneButton;
+import frc.robot.XBoxOneController.XBoxOneControl;
+// import frc.robot.XBoxOneController.XBoxOneTrigger;
 
 public final class ControllerBindings {
-    public static final LogitechAxis Y_AXIS = LogitechAxis.Y;
-    public static final LogitechAxis X_AXIS = LogitechAxis.X;
+    public static final XBoxOneAxis Y_AXIS = XBoxOneAxis.Y;
+    public static final XBoxOneAxis X_AXIS = XBoxOneAxis.X;
+    public static final XBoxOneAxis LEFT_TRIGGER_AXIS = XBoxOneAxis.LEFT_TRIGGER_AXIS;
+    public static final XBoxOneAxis RIGHT_TRIGGER_AXIS = XBoxOneAxis.RIGHT_TRIGGER_AXIS;
 
-    public static final LogitechControl RIGHT_STICK = LogitechControl.RIGHT_STICK;
-    public static final LogitechControl LEFT_STICK = LogitechControl.LEFT_STICK;
+    public static final XBoxOneControl RIGHT_STICK = XBoxOneControl.RIGHT_STICK;
+    public static final XBoxOneControl LEFT_STICK = XBoxOneControl.LEFT_STICK;
 
-    public static final LogitechButton INTAKE = LogitechButton.LEFT_TRIGGER;
-    public static final LogitechButton OUTTAKE = LogitechButton.RIGHT_TRIGGER;
-    public static final LogitechButton OVERRIDE_ELEVATOR_GATE = LogitechButton.SELECT; // FIXME bind to something else
+    public static final XBoxOneControl INTAKE = XBoxOneControl.LEFT_TRIGGER;
+    public static final XBoxOneControl OUTTAKE = XBoxOneControl.RIGHT_TRIGGER;
+    public static final XBoxOneButton OVERRIDE_ELEVATOR_GATE = XBoxOneButton.SELECT; // FIXME bind to something else
 
-    public static final LogitechButton SHOOT_FENDER = LogitechButton.A;
-    public static final LogitechButton SHOOT_GENERAL = LogitechButton.X;
-    public static final LogitechButton SHOOT_LAUNCH_CLOSE = LogitechButton.RIGHT_BUMPER;
-    // public static final LogitechButton AIM = LogitechButton.B;
-    public static final LogitechButton NOT_AIM = LogitechButton.Y;
+    public static final XBoxOneButton SHOOT_FENDER = XBoxOneButton.A;
+    public static final XBoxOneButton SHOOT_GENERAL = XBoxOneButton.X;
+    public static final XBoxOneButton SHOOT_LAUNCH_CLOSE = XBoxOneButton.RIGHT_BUMPER;
+    // public static final XBoxOneButton AIM = XBoxOneButton.B;
+    public static final XBoxOneButton NOT_AIM = XBoxOneButton.Y;
 
-    public static final LogitechButton DRIVE_REVERSE = LogitechButton.LEFT_BUMPER;
+    public static final XBoxOneButton DRIVE_REVERSE = XBoxOneButton.LEFT_BUMPER;
 
     // Potential climber aspects (not required; one can instead utilize RIGHT_STICK and LEFT_STICK if they prefer in Robot.java).
-    public static final LogitechControl CLIMBER = LogitechControl.LEFT_STICK;
-    public static final LogitechControl CLIMBER_LIFTER = LogitechControl.RIGHT_STICK;
-    public static final LogitechButton ELEVATOR_IN = LogitechButton.LEFT_BUMPER;
+    public static final XBoxOneControl CLIMBER = XBoxOneControl.LEFT_STICK;
+    public static final XBoxOneControl CLIMBER_LIFTER = XBoxOneControl.RIGHT_STICK;
+    public static final XBoxOneButton ELEVATOR_IN = XBoxOneButton.LEFT_BUMPER;
 }

@@ -20,17 +20,10 @@ public class Autonomous {
 
     private double targetDistance;
 
-    interface Waiter {
-        void waitFor(long delay, TimeUnit unit) throws InterruptedException;
-    }
-
-    private final Waiter waiter;
-
     private final CANSparkMax leftSide;
     private final CANSparkMax rightSide;
 
-    public Autonomous(Waiter waiter, Drive drivetrain, BallPath ballPath){
-        this.waiter = waiter;
+    public Autonomous(Drive drivetrain, BallPath ballPath){
         this.drivetrain = drivetrain;
         this.leftSide = drivetrain.getLeftSide();
         this.rightSide = drivetrain.getRightSide();
@@ -124,7 +117,7 @@ public class Autonomous {
     }
 
     void stopShooting(){
-        this.ballPath.setAction(BallAction.STOP_SHOOTING);
+        this.ballPath.setAction(BallAction.NONE);
         // this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
     }
 
