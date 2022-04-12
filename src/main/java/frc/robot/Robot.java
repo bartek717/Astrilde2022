@@ -407,13 +407,13 @@ public class Robot extends TitanBot {
       outake = this.operatorPad.getValue(ControllerBindings.OUTTAKE, ControllerBindings.RIGHT_TRIGGER_AXIS);
 
       // Intake
-      if (intake != 0){
+      if (intake > 0.9){
         this.ballSubsystem.setAction(BallAction.INDEX);
       } else{
         this.ballSubsystem.setAction(BallAction.NONE);
       }
 
-      if (outake != 0){
+      if (outake > 0.9){
         this.ballSubsystem.setAction(BallAction.OUT);
       } else {
         this.ballSubsystem.setAction(BallAction.NONE);
