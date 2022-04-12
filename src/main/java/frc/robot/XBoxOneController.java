@@ -63,6 +63,7 @@ public class XBoxOneController extends AbstractController {
         @Override
         public int getIdentifier(final Axis axis) {
             Objects.requireNonNull(axis);
+            // System.out.println(axis);
             if(this.id == 0 && axis.equals(XBoxOneAxis.X)){
                 return 0;
             }

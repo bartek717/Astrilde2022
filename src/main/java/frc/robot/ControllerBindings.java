@@ -17,8 +17,10 @@ public final class ControllerBindings {
     public static final XBoxOneControl RIGHT_STICK = XBoxOneControl.RIGHT_STICK;
     public static final XBoxOneControl LEFT_STICK = XBoxOneControl.LEFT_STICK;
 
-    public static final XBoxOneControl INTAKE = XBoxOneControl.LEFT_TRIGGER;
-    public static final XBoxOneControl OUTTAKE = XBoxOneControl.RIGHT_TRIGGER;
+    // public static final XBoxOneControl INTAKE = XBoxOneControl.LEFT_TRIGGER;
+    // public static final XBoxOneControl OUTTAKE = XBoxOneControl.RIGHT_TRIGGER;
+    public static final XBoxOneButton INTAKE = XBoxOneButton.LEFT_BUMPER;
+    public static final XBoxOneButton OUTAKE = XBoxOneButton.RIGHT_BUMPER;
     public static final XBoxOneButton OVERRIDE_ELEVATOR_GATE = XBoxOneButton.SELECT; // FIXME bind to something else
 
     public static final XBoxOneButton SHOOT_FENDER = XBoxOneButton.A;

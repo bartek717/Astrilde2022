@@ -129,20 +129,6 @@ public class Robot extends TitanBot {
 
     DigitalInput elevatorBeam = new DigitalInput(0);
     DigitalInput intakeBeam = new DigitalInput(2);
-    
-    //SpeedControllerGroup leftSide = new SpeedControllerGroup(leftMotorController1, leftMotorController2);
-    //SpeedControllerGroup rightSide = new SpeedControllerGroup(rightMotorController1, rightMotorController2);
-    
-    // rightSide.setInverted(true);
-    // Encoder leftEncoder = new Encoder(RobotMap.LEFT_ENCODER_PORTS[0], RobotMap.LEFT_ENCODER_PORTS[1], false, Encoder.EncodingType.k2X);
-    // Encoder rightEncoder = new Encoder(RobotMap.RIGHT_ENCODER_PORTS[0], RobotMap.RIGHT_ENCODER_PORTS[1], false, Encoder.EncodingType.k2X);
-    // RelativeEncoder leftEncoderPrimary = leftControllerPrimary.getEncoder();
-    // RelativeEncoder rightEncoderPrimary = rightControllerPrimary.getEncoder();
-
-    final I2C.Port i2cPort = I2C.Port.kMXP;
-    final ColorSensorV3 m_colorSensor = new ColorSensorV3(i2cPort);
-
-    
 
     this.drive = new RawDriveImpl(leftControllerPrimary, rightControllerPrimary);
 
@@ -178,7 +164,7 @@ public class Robot extends TitanBot {
 
     // ELEVATOR COMPONENTS
     WPI_TalonSRX elevatorMotorController = new WPI_TalonSRX(RobotMap.ELEVATOR_TALON_PORT);
-    this.elevator = new ElevatorImpl(elevatorMotorController, shooter, m_colorSensor, elevatorBeam);
+    this.elevator = new ElevatorImpl(elevatorMotorController, elevatorBeam);
 
     this.ballSubsystem = new BallPathImpl(intake, elevator, shooter,blinkenController);
     
@@ -375,6 +361,12 @@ public class Robot extends TitanBot {
     this.operatorPad.bind(ControllerBindings.ELEVATOR_IN, PressType.PRESS, ()-> this.ballSubsystem.setAction(BallAction.SHOOT));
     this.operatorPad.bind(ControllerBindings.ELEVATOR_IN, PressType.RELEASE, ()-> this.ballSubsystem.setAction(BallAction.STOP_SHOOTING));
 
+    this.operatorPad.bind(ControllerBindings.INTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.INDEX));
+    this.operatorPad.bind(ControllerBindings.INTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
+    
+    this.operatorPad.bind(ControllerBindings.OUTAKE, PressType.PRESS, () -> this.ballSubsystem.setAction(BallAction.OUT));
+    this.operatorPad.bind(ControllerBindings.OUTAKE, PressType.RELEASE, () -> this.ballSubsystem.setAction(BallAction.NONE));
+
     this.ballSubsystem.setAction(BallPath.BallAction.MANUAL);
 
     // Testing climber bindings.
@@ -400,25 +392,6 @@ public class Robot extends TitanBot {
       turn = this.driverPad.getValue(ControllerBindings.LEFT_STICK, ControllerBindings.X_AXIS);
 
       this.drive.drive(forward, turn); 
-
-      double intake, outake;
-      
-      intake = this.operatorPad.getValue(ControllerBindings.INTAKE, ControllerBindings.LEFT_TRIGGER_AXIS);
-      outake = this.operatorPad.getValue(ControllerBindings.OUTTAKE, ControllerBindings.RIGHT_TRIGGER_AXIS);
-
-      // Intake
-      if (intake > 0.9){
-        this.ballSubsystem.setAction(BallAction.INDEX);
-      } else{
-        this.ballSubsystem.setAction(BallAction.NONE);
-      }
-
-      if (outake > 0.9){
-        this.ballSubsystem.setAction(BallAction.OUT);
-      } else {
-        this.ballSubsystem.setAction(BallAction.NONE);
-      }
-
 
       // Ballpath.
       if(toggle){

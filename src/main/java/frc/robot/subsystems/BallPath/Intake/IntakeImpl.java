@@ -42,41 +42,23 @@ public class IntakeImpl extends RepeatingPooledSubsystem implements Intake {
 
     @Override
     public void task() throws Exception {
-        boolean noBallPresent = this.beam.get();
 
         switch (this.action) {
-            case AUTO:
-                this.intake.set(MOTOR_SPEED);
-                break;
-            case FEED:
-                if (!noBallPresent) {
-                    this.intake.stopMotor();
-                } else {
-                    this.intake.set(MOTOR_SPEED);
-                }
-                break;
-            case PRIME:
-                if (!noBallPresent) {
-                    this.intake.set(MOTOR_SPEED);
-                } else {
-                    this.intake.stopMotor();
-                }
-                break;
-            case STOP:
-                this.intake.set(0);
-                break;
-            case REJECT:
-                if (!noBallPresent) {
-                    this.intake.set(-MOTOR_SPEED);
-                } else {
-                    this.intake.stopMotor();
-                }
-                break;
             case IN:
                 this.intake.set(MOTOR_SPEED);
                 break;
             case OUT:
                 this.intake.set(-MOTOR_SPEED);
+                break;
+            case STOP:
+                this.intake.set(0);
+                break;
+            case INDEX:
+                if (this.ballPrimed()) {
+                    this.intake.set(0);
+                } else {
+                    this.intake.set(MOTOR_SPEED);
+                }
                 break;
             case NONE:
             default:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                

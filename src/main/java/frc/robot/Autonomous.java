@@ -108,17 +108,12 @@ public class Autonomous {
         return this.ballPath.getElevator().ballPrimed();
     }
 
-    void reverseIntake(){
-        this.ballPath.getIntake().setAction(Intake.IntakeAction.OUT);;
-    }
-
     void prepareToShoot(){
         ballPath.setAction(BallAction.INDEX);
     }
 
     void stopShooting(){
         this.ballPath.setAction(BallAction.NONE);
-        // this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
     }
 
     void shootGeneral(){
