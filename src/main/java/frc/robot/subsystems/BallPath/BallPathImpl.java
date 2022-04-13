@@ -53,9 +53,6 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void task() {
-        // int ballNumber = startBall + intake.getBallsIntake() - shooter.getBallsShooter();
-        // SmartDashboard.putNumber("BALL NUMBER", ballNumber);
-
 
         switch (action) {
             case YES_SHOOT:
@@ -116,6 +113,7 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                     this.elevator.setAction(ElevatorAction.RUN);
                 }
                 break;
+
             case STOP_SHOOTING:
                 this.elevator.setAction(ElevatorAction.NONE);
             case MANUAL:

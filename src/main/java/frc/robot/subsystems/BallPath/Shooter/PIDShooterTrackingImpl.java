@@ -1,34 +1,24 @@
 
 package frc.robot.subsystems.BallPath.Shooter;
 
-import java.nio.file.spi.FileSystemProvider;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.fasterxml.jackson.databind.ser.std.StdArraySerializers.FloatArraySerializer;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
-import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import ca.team3161.lib.utils.Utils;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.AnalogPotentiometer;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 
 
-import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
 
 public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implements Shooter {
     
@@ -231,7 +221,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
 
     
     public double getSetpointHoodShooter(Double distance){
-        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
+        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
         double[] wheelValues = {2000, 7000,  8000, 9000, 10000, 10500};
@@ -252,7 +242,7 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
     }
 
     public double getSetpointWheel(Double distance){
-        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
+        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd;
         double returnAmount = 0;
         double[] distances = {44.0,    77,  113.4, 145.5, 170.8, 220.5};
         int[] wheelValues = {5_500, 5_700,  5_900, 6_100, 8_500, 9_700};
@@ -316,11 +306,11 @@ public class PIDShooterTrackingImpl extends RepeatingIndependentSubsystem implem
             case FENDER:
                 shootFender = true;
                 aim = false;
-                setPointShooterPID = 5200; //4700
+                setPointShooterPID = 7000; //4700
                 setPointHood = 0;
                 setPointRotation = 0;
                 shoot = true;
-                hoodShooterMotorSpeed = 4250; // 4250
+                hoodShooterMotorSpeed = 9000; // 4250
                 // System.out.println("FENDER");
                 break;
             case GENERAL:

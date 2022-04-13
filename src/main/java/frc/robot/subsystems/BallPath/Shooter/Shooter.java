@@ -1,7 +1,5 @@
 package frc.robot.subsystems.BallPath.Shooter;
 
-import com.revrobotics.CANSparkMax;
-
 import ca.team3161.lib.robot.LifecycleListener;
 import ca.team3161.lib.robot.subsystem.Subsystem;
 

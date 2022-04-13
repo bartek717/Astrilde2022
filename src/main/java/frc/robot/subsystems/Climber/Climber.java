@@ -11,6 +11,8 @@ public interface Climber extends Subsystem, LifecycleListener {
     // to attach inner, non retractable arm to the bar
     void extendElbow(double speed);
     void resetClimberPosition();
+    void primeClimber();
+    void none();
     //void retractInnerLifter(double speed);
     //void angleOuter(double angle);
 }

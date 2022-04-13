@@ -15,6 +15,8 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
     private WPI_TalonSRX primaryClimberMotorController;
     private WPI_TalonSRX followerClimberMotorController;
     private CANSparkMax shoulderMotorController;
+    private boolean climberDeployed = false;
+    private boolean innerUp = false;
 
     public ClimberImpl(WPI_TalonSRX primaryClimberMotorController, WPI_TalonSRX followerClimberMotorController, CANSparkMax shoulderMotorController) {
         super(20, TimeUnit.MILLISECONDS);
@@ -63,6 +65,39 @@ public class ClimberImpl extends RepeatingPooledSubsystem implements Climber {
     @Override
     public void lifecycleStatusChanged(LifecycleEvent previous, LifecycleEvent current) {
         // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void primeClimber() {
+        double positionNEO = this.shoulderMotorController.getEncoder().getPosition();
+        double leftClimberMotorControllerPosition = primaryClimberMotorController.getSelectedSensorPosition();
+        double rightClimberMotorControllerPosition = followerClimberMotorController.getSelectedSensorPosition();
+        double lowerSoftStop = -3.25;
+        if (positionNEO >= lowerSoftStop && !climberDeployed && !innerUp) {
+            extendShoulder(1);
+        }else{
+            climberDeployed = true;
+        }
+        
+        if(climberDeployed && positionNEO <= 10 && !innerUp){
+            this.shoulderMotorController.set(1);
+        }else{
+            innerUp = true;
+        }
+        
+        
+        if(climberDeployed && innerUp && leftClimberMotorControllerPosition < 100000){
+            this.shoulderMotorController.set(0);
+            this.primaryClimberMotorController.set(0.2);
+        }
+
+        
+    }
+
+    @Override
+    public void none() {
+        this.shoulderMotorController.set(0);
         
     }
 

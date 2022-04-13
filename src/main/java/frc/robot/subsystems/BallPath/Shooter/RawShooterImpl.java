@@ -9,8 +9,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import ca.team3161.lib.utils.Utils;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class RawShooterImpl extends RepeatingPooledSubsystem implements Shooter {
 
