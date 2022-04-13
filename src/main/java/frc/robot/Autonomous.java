@@ -2,13 +2,11 @@ package frc.robot;
 
 // SUBSYSTEM IMPORTS
 import frc.robot.subsystems.BallPath.BallPath.BallAction;
-import frc.robot.subsystems.BallPath.Intake.Intake;
-import frc.robot.subsystems.BallPath.Shooter.Shooter.ShotPosition;
 import frc.robot.subsystems.BallPath.BallPath;
 import frc.robot.subsystems.Drivetrain.Drive;
 import frc.robot.subsystems.Drivetrain.RawDriveImpl;
 
-import java.util.concurrent.TimeUnit;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
@@ -33,8 +31,8 @@ public class Autonomous {
     public boolean turn(AHRS gyro, double degree) throws InterruptedException {
         double target = gyro.getAngle() + degree;
         double error = target - gyro.getAngle();
-        double kP = 0.005;
-        double tolerance = 2;
+        double kP = 0.003;
+        double tolerance = 1;
 
         if (degree != 0){
             while (gyro.getAngle() < target - tolerance || gyro.getAngle() > target + tolerance){
@@ -42,6 +40,8 @@ public class Autonomous {
                 this.leftSide.set(kP * error);
                 this.rightSide.set(-kP * error);
                 error = target - gyro.getAngle();
+                SmartDashboard.putNumber("LEFTSIDE POS: ", this.leftSide.get());
+                SmartDashboard.putNumber("RIGHTSIDE POS: ", this.rightSide.get());
                 if (Robot.DEBUG){
                     System.out.println(error);
                 }
@@ -105,20 +105,15 @@ public class Autonomous {
     }
 
     boolean ballPresent(){
-        return this.ballPath.getElevator().ballPrimed();
-    }
-
-    void reverseIntake(){
-        this.ballPath.getIntake().setAction(Intake.IntakeAction.OUT);;
+        return this.ballPath.getElevator().ballPrimed() && this.ballPath.getIntake().ballPrimed();
     }
 
     void prepareToShoot(){
-        ballPath.setAction(BallAction.INDEX);
+        this.ballPath.setAction(BallAction.INDEX);
     }
 
     void stopShooting(){
         this.ballPath.setAction(BallAction.NONE);
-        // this.ballPath.getShooter().setShotPosition(ShotPosition.NONE);
     }
 
     void shootGeneral(){

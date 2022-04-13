@@ -1,8 +1,5 @@
 package frc.robot.subsystems.BallPath.Shooter;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -11,7 +8,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 import ca.team3161.lib.robot.LifecycleEvent;
 import ca.team3161.lib.robot.subsystem.RepeatingIndependentSubsystem;
-import ca.team3161.lib.robot.subsystem.RepeatingPooledSubsystem;
 import ca.team3161.lib.utils.Utils;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -119,7 +115,7 @@ public class PIDShooterImpl extends RepeatingIndependentSubsystem implements Sho
     }
 
     public double getSetpointWheel(Double distance){
-        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd, a;
+        double wheelDif, distDif, difFromUpper, percentToAdd, amountToAdd;
         double returnAmount = 0;
         double[] distances = {44.0, 113.4, 145.5, 170.8, 220.5};
         int[] wheelValues = {5_500, 7_500, 9_500, 10_000, 11_000};

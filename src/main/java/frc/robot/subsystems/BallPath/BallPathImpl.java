@@ -22,8 +22,6 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
     private BlinkinLEDController blinkenController;
     boolean checkBall = false;
     boolean noShoot = false;
-    private boolean flipped = false;
-    private boolean ballSent = false;
     int startBall = 1;
     int readyShootDelay = 0;
 
@@ -55,9 +53,6 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
 
     @Override
     public void task() {
-        // int ballNumber = startBall + intake.getBallsIntake() - shooter.getBallsShooter();
-        // SmartDashboard.putNumber("BALL NUMBER", ballNumber);
-
 
         switch (action) {
             case YES_SHOOT:
@@ -93,26 +88,21 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 }
                 
                 break;
-            case NONE:
-                this.intake.setAction(IntakeAction.STOP);
-                this.elevator.setAction(ElevatorAction.STOP);
-                this.shooter.setShotPosition(ShotPosition.STARTAIM);
-                checkBall = false;
-                ballSent = false;
-                flipped = false;
-                break;
             case INDEX:
                 if (this.elevator.ballPrimed()){
-                    this.intake.setAction(IntakeAction.IN);
-                    if(this.intake.ballPrimed()){
-                        this.intake.setAction(IntakeAction.STOP);
-                    }
+                    this.intake.setAction(IntakeAction.INDEX);
                 } else{
                     this.elevator.setAction(ElevatorAction.INDEX);
                     this.intake.setAction(IntakeAction.IN);
                 }
                 
                 checkBall = true;
+                break;
+            case NONE:
+                this.intake.setAction(IntakeAction.STOP);
+                this.elevator.setAction(ElevatorAction.STOP);
+                this.shooter.setShotPosition(ShotPosition.STARTAIM);
+                checkBall = false;
                 break;
             case OUT:
                 this.elevator.setAction(ElevatorAction.OUT);
@@ -123,9 +113,9 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                     this.elevator.setAction(ElevatorAction.RUN);
                 }
                 break;
+
             case STOP_SHOOTING:
-            this.elevator.setAction(ElevatorAction.NONE);
-            case AUTO:
+                this.elevator.setAction(ElevatorAction.NONE);
             case MANUAL:
                 break;
             
@@ -133,8 +123,6 @@ public class BallPathImpl extends RepeatingPooledSubsystem implements BallPath {
                 intake.setAction(IntakeAction.NONE);
                 elevator.setAction(ElevatorAction.NONE);
                 shooter.setShotPosition(ShotPosition.NONE);
-                ballSent = false;
-                flipped = false;
                 break;
         }
 

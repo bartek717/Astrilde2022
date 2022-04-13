@@ -8,17 +8,10 @@ public interface Intake extends Subsystem, LifecycleListener {
     boolean ballPrimed();
 
     enum IntakeAction {
-        STOP,
-        NONE,
-        AUTO,
-        PRIME,
-        REJECT,
-        FEED,
-        TESTIN,
-        TESTOUT,
-        TESTSHOOT,
         IN,
         OUT,
-        ;
+        STOP,
+        INDEX,
+        NONE;
     }
 }

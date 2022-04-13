@@ -1,12 +1,9 @@
 package frc.robot;
 
-// import ca.team3161.lib.utils.controls.LogitechDualAction.XBoxOneButton;
-// import ca.team3161.lib.utils.controls.LogitechDualAction.XboxXBoxOneControl;
-// import ca.team3161.lib.utils.controls.LogitechDualAction.XBoxOneAxis;
+
 import frc.robot.XBoxOneController.XBoxOneAxis;
 import frc.robot.XBoxOneController.XBoxOneButton;
 import frc.robot.XBoxOneController.XBoxOneControl;
-// import frc.robot.XBoxOneController.XBoxOneTrigger;
 
 public final class ControllerBindings {
     public static final XBoxOneAxis Y_AXIS = XBoxOneAxis.Y;
@@ -18,13 +15,13 @@ public final class ControllerBindings {
     public static final XBoxOneControl LEFT_STICK = XBoxOneControl.LEFT_STICK;
 
     public static final XBoxOneControl INTAKE = XBoxOneControl.LEFT_TRIGGER;
-    public static final XBoxOneControl OUTTAKE = XBoxOneControl.RIGHT_TRIGGER;
+    public static final XBoxOneControl OUTAKE = XBoxOneControl.RIGHT_TRIGGER;
     public static final XBoxOneButton OVERRIDE_ELEVATOR_GATE = XBoxOneButton.SELECT; // FIXME bind to something else
 
     public static final XBoxOneButton SHOOT_FENDER = XBoxOneButton.A;
     public static final XBoxOneButton SHOOT_GENERAL = XBoxOneButton.X;
     public static final XBoxOneButton SHOOT_LAUNCH_CLOSE = XBoxOneButton.RIGHT_BUMPER;
-    // public static final XBoxOneButton AIM = XBoxOneButton.B;
+    public static final XBoxOneButton DEPLOY_CLIMBER = XBoxOneButton.B;
     public static final XBoxOneButton NOT_AIM = XBoxOneButton.Y;
 
     public static final XBoxOneButton DRIVE_REVERSE = XBoxOneButton.LEFT_BUMPER;

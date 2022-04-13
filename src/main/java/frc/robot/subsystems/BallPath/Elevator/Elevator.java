@@ -9,16 +9,11 @@ public interface Elevator extends Subsystem, LifecycleListener {
     void setGateOverride(boolean override);
 
     enum ElevatorAction {
-        STOP,
-        NONE,
-        PRIME,
-        REJECT,
-        FEED,
-        TEST,
         IN,
         OUT,
+        STOP,
         RUN,
         INDEX,
-        ;
+        NONE;
     }
 }
