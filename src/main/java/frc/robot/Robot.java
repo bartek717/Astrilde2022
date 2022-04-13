@@ -24,6 +24,7 @@ import ca.team3161.lib.utils.controls.InvertedJoystickMode;
 import ca.team3161.lib.utils.controls.JoystickMode;
 import ca.team3161.lib.utils.controls.LogitechDualAction.DpadDirection;
 import ca.team3161.lib.utils.controls.SquaredJoystickMode;
+import edu.wpi.first.util.net.PortForwarder;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Timer;
@@ -90,6 +91,14 @@ public class Robot extends TitanBot {
   @Override
   public void robotSetup() {
     System.out.println("Robot setup start");
+    
+    PortForwarder.add(5800, "limelight.local", 5800);
+    PortForwarder.add(5801, "limelight.local", 5801);
+    PortForwarder.add(5802, "limelight.local", 5802);
+    PortForwarder.add(5803, "limelight.local", 5803);
+    PortForwarder.add(5804, "limelight.local", 5804);
+    PortForwarder.add(5805, "limelight.local", 5805);
+
     m_chooser.setDefaultOption("Two Ball Auto", k2Ball);
     m_chooser.addOption("Three Ball Auto", k3Ball);
     m_chooser.addOption("Four Ball Auto", k4Ball);
